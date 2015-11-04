@@ -1,0 +1,18 @@
+name: broker_dart
+version: 1.0.0
+description: Dart based DSA Broker
+dependencies:
+  args: ^0.13.2
+  bignum: ">=0.0.7 <0.1.0"
+  cipher: ^0.7.1
+  logging: ^0.11.2
+  crypto: ^0.9.0
+  dslink:
+    git: git@github.com:IOT-DSA/sdk-dslink-dart.git
+dev_dependencies:
+  test: ^0.12.5
+  browser: any
+environment:
+  sdk: ^1.9.0
+executables:
+  dsbroker: broker
