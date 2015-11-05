@@ -1,4 +1,4 @@
-name: broker_dart
+name: dsbroker
 version: 1.0.0
 description: Dart based DSA Broker
 dependencies:

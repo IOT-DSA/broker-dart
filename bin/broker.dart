@@ -7,7 +7,7 @@ import "package:dslink/utils.dart";
 import "package:dslink/server.dart";
 import "package:dslink/dslink.dart";
 
-import "package:broker_dart/broker.dart";
+import "package:dsbroker/broker.dart";
 
 BrokerNodeProvider broker;
 DsHttpServer server;
