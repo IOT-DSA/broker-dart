@@ -5,6 +5,7 @@ import "dart:io";
 import "package:dslink/client.dart";
 import "package:dslink/utils.dart";
 import "package:dslink/server.dart";
+import "package:dslink/dslink.dart";
 
 import "package:broker_dart/broker.dart";
 

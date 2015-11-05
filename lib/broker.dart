@@ -10,7 +10,7 @@ import 'dart:async';
 import 'package:dslink/utils.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'src/http/websocket_conn.dart';
+import 'package:dslink/src/http/websocket_conn.dart';
 import 'dart:typed_data';
 import 'package:dslink/query.dart';
 
@@ -19,7 +19,6 @@ part 'src/broker/broker_node.dart';
 part 'src/broker/remote_node.dart';
 part 'src/broker/remote_root_node.dart';
 part 'src/broker/remote_requester.dart';
-part 'src/broker/broker_discovery.dart';
 part 'src/broker/broker_permissions.dart';
 part 'src/broker/broker_alias.dart';
 part 'src/broker/user_node.dart';
