@@ -1,4 +1,4 @@
-part of broker;
+part of dsbroker.broker;
 
 /// Wrapper node for brokers
 class BrokerNode extends LocalNodeImpl with BrokerNodePermission{

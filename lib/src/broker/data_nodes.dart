@@ -1,4 +1,4 @@
-part of broker;
+part of dsbroker.broker;
 
 class BrokerDataNode extends BrokerNode {
   static IValueStorageBucket storage;

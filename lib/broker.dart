@@ -1,5 +1,5 @@
 /// DSA Broker Implementation
-library broker;
+library dsbroker.broker;
 
 import 'package:dslink/client.dart' show LinkProvider;
 import 'package:dslink/responder.dart';

@@ -1,4 +1,4 @@
-part of broker;
+part of dsbroker.broker;
 
 class BrokerTraceNode extends BrokerHiddenNode {
   static BrokerTraceNode traceNode;

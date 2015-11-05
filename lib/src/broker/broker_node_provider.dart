@@ -1,4 +1,4 @@
-part of broker;
+part of dsbroker.broker;
 
 class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   /// map that holds all nodes

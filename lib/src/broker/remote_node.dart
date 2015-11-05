@@ -1,4 +1,4 @@
-part of broker;
+part of dsbroker.broker;
 
 class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
   final Map<String, RemoteLinkNode> nodes = new Map<String, RemoteLinkNode>();

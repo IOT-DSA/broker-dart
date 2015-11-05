@@ -1,4 +1,4 @@
-part of broker;
+part of dsbroker.broker;
 
 /// a server link for both http and ws
 class HttpServerLink implements ServerLink {

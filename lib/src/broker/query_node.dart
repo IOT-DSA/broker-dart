@@ -1,4 +1,4 @@
-part of broker;
+part of dsbroker.broker;
 
 class BrokerQueryNode extends BrokerStaticNode {
   BrokerQueryManager _manager;

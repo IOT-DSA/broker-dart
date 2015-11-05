@@ -1,4 +1,4 @@
-part of broker;
+part of dsbroker.broker;
 
 class UserNode extends BrokerNode {
   final String username;

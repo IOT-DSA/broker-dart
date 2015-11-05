@@ -1,4 +1,4 @@
-part of broker;
+part of dsbroker.broker;
 
 class TokenGroupNode extends BrokerStaticNode {
   // a token map used by both global tokens, and user tokens

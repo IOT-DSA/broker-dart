@@ -1,4 +1,4 @@
-part of broker;
+part of dsbroker.broker;
 
 // TODO, implement special configs and attribute merging
 class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implements BrokerNode {

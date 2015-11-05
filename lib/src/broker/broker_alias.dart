@@ -1,1 +1,1 @@
-part of broker;
+part of dsbroker.broker;

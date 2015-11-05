@@ -1,4 +1,4 @@
-part of broker;
+part of dsbroker.broker;
 
 class ThroughPutController {
   static ThroughPutNode messagesOutPerSecond;

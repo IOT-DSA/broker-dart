@@ -1,4 +1,4 @@
-part of broker;
+part of dsbroker.broker;
 
 class RemoteRequester extends Requester implements IRemoteRequester {
   final RemoteLinkManager _linkManager;
