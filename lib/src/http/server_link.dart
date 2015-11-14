@@ -84,6 +84,7 @@ class HttpServerLink implements ServerLink {
       String httpUri: '/http',
       int updateInterval: 200,
       Map linkData,
+      List formats,
       bool trusted: false}) async {
     isRequester = clientResponder;
     isResponder = clientRequester;
@@ -107,6 +108,15 @@ class HttpServerLink implements ServerLink {
     }
     if (requester is IRemoteRequester) {
       respJson["path"] = (requester as IRemoteRequester).responderPath;
+    }
+    if (formats != null) {
+      if (formats.contains('msgpack')) {
+        respJson['format'] = 'msgpack';
+      } else {
+        respJson['format'] = 'json';
+      }
+    } else {
+      respJson['format'] = 'json';
     }
     updateResponseBeforeWrite(request);
     request.response.write(DsJson.encode(respJson));
@@ -188,7 +198,7 @@ class HttpServerLink implements ServerLink {
 
     WebSocketTransformer.upgrade(request).then((WebSocket websocket) {
 
-      wsconnection = createWsConnection(websocket);
+      wsconnection = createWsConnection(websocket, request.uri.queryParameters['format']);
       wsconnection.addConnCommand('salt', salts[0]);
 
       //wsconnection.onRequesterReady.then((channel) {
@@ -234,7 +244,8 @@ class HttpServerLink implements ServerLink {
     }
   }
 
-  WebSocketConnection createWsConnection(WebSocket websocket) {
-    return new WebSocketConnection(websocket, enableTimeout: enableTimeout, enableAck:enableAck);
+  WebSocketConnection createWsConnection(WebSocket websocket, String format) {
+    return new WebSocketConnection(websocket, enableTimeout: enableTimeout
+        , enableAck:enableAck, useCodec:DsCodec.getCodec(format));
   }
 }

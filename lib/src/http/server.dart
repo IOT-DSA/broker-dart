@@ -177,6 +177,14 @@ class DsHttpServer {
         String str = const Utf8Decoder().convert(merged);
         Map m = DsJson.decode(str);
         
+        // validate the input structure
+        if (m['linkData'] != null && m['linkData'] is! Map){
+          throw HttpStatus.BAD_REQUEST;
+        }
+        if (m['formats'] != null && m['formats'] is! List){
+          throw HttpStatus.BAD_REQUEST;
+        }
+        
         HttpServerLink link = _linkManager.getLinkAndConnectNode(dsId);
              
         if (link == null) {
@@ -204,7 +212,7 @@ class DsHttpServer {
         
         link.initLink(request, m['isRequester'] == true,
             m['isResponder'] == true, dsId, publicKey,
-            updateInterval: updateInterval, linkData:m['linkData']);
+            updateInterval: updateInterval, linkData:m['linkData'], formats:m['formats']);
       } catch (err) {
         if (err is int) {
           // TODO need protection because changing statusCode itself can throw
