@@ -105,6 +105,11 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       await loadDataNodes();
       registerInvokableProfile(dataNodeFunctions);
     }
+    if (storage != null) {
+      loadOverrideAttributes();
+    }
+    
+    
     if (storedData != null) {
       for (List<ISubscriptionNodeStorage> nodeData in storedData) {
         if (nodeData.length > 0) {
@@ -230,7 +235,25 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     } catch (err) {}
   }
   
+  loadOverrideAttributes() async {
+    IValueStorageBucket storageBucket = storage.getOrCreateValueStorageBucket('attribute');
+    RemoteLinkNode.storageBucket = storageBucket;
+    logger.finest('loading proxy attributes');
+    Map values = await storageBucket.load();
+    values.forEach((key, val){
+      LocalNode node = this.getOrCreateNode(key);
+      if (node is RemoteLinkNode && node._linkManager.inTree) {
+        node.updateOverrideAttributes(val);
+      } else {
+        storageBucket.getValueStorage(key).destroy();
+      }
+    });
+  }
   loadDataNodes() async {
+    if (storage != null) {
+      BrokerDataNode.storageBucket = storage.getOrCreateValueStorageBucket('data');
+    }
+    logger.finest('loading data nodes');
     dataNode = new BrokerDataRoot('/data', this);
     root.children['data'] = dataNode;
     nodes['/data'] = dataNode;
@@ -246,13 +269,12 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       });
     } catch (err) {}
     if (storage != null) {
-       BrokerDataNode.storage = storage.getOrCreateValueStorageBucket('data');
-       Map values = await BrokerDataNode.storage.load();
+       Map values = await BrokerDataNode.storageBucket.load();
        values.forEach((key, val){
          if (nodes[key] is BrokerDataNode) {
            nodes[key].updateValue(val);
          } else {
-           BrokerDataNode.storage.removeValue(key);
+           BrokerDataNode.storageBucket.getValueStorage(key).destroy();
          }
        });
     }

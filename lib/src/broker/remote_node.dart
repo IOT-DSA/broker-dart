@@ -137,6 +137,9 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
 }
 
 class RemoteLinkNode extends RemoteNode implements LocalNode {
+  /// storage bucket for override attributes
+  static IValueStorageBucket storageBucket;
+  
   final BrokerNodeProvider provider;
 
   ListController createListController(Requester requester) {
@@ -326,6 +329,10 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
 
   Response setAttribute(
       String name, Object value, Responder responder, Response response) {
+    if (value is Map && value['@'] != null) {
+      overrideArrtibuteChanged(name, value);
+      return response..close(); 
+    }
     // TODO check permission on RemoteLinkRootNode
     _linkManager.requester.set('$remotePath/$name', value).then((update) {
       response.close();
@@ -408,6 +415,124 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
       addChild(name, value);
     }
   }
+  
+  
+  IValueStorage _attributeStorage;
+  Map _overrideAttributes;
+  Map _downstreamAttributes;
+  /// override attribute change from the broker
+  void overrideArrtibuteChanged(String name, Map value) {
+    if (_attributeStorage == null && storageBucket != null) {
+      _attributeStorage = storageBucket.getValueStorage(path);
+    }
+    if (value['@'] == 'clear') {
+      if (_overrideAttributes != null && _overrideAttributes.containsKey(name)) {
+        _overrideAttributes.remove(name);
+        if (_overrideAttributes.isEmpty) {
+          _attributeStorage.destroy();
+        } else {
+          _attributeStorage.setValue(_overrideAttributes);
+        }
+        
+      }
+      if (_downstreamAttributes.containsKey(name)) {
+        attributes[name] = _downstreamAttributes[name];
+      }
+    } else {
+       if (_overrideAttributes == null) {
+         _overrideAttributes = {};
+         _downstreamAttributes = {};
+       }
+       if (!_overrideAttributes.containsKey(name) && attributes[name] != null) {
+         _downstreamAttributes = attributes[name];
+       }
+       _overrideAttributes[name] = value;
+       _attributeStorage.setValue(_overrideAttributes);
+       mergeOverrideAttribute(name);
+    }
+    listChangeController.add(name);
+  }
+  /// attribute change update from downstream
+  bool downstreamAttributeChanged(String name, Object value) {
+    if (_overrideAttributes != null && _overrideAttributes.containsKey(name)) {
+      _downstreamAttributes[name] = value;
+      if (_overrideAttributes[name]['@'] == 'overwrite') {
+        return false;
+      }
+      mergeOverrideAttribute(name);
+      return true;
+    } else {
+      if (value == null) {
+        attributes.remove(name);
+      } else {
+        attributes[name] = value;
+      }
+      return true;
+    }
+  }
+  /// merge the attribute from downstream
+  void mergeOverrideAttribute(name) {
+    if (_overrideAttributes.containsKey(name)) {
+      if (_downstreamAttributes.containsKey(name)) {
+        Map m = _overrideAttributes[name];
+        if (m['@'] == 'merge') {
+          Map rsltMap = {'@':'merge' ,'type':m['type']};
+          Object valo = m['val'];
+          Object vald = _downstreamAttributes[name];
+          if (vald is Map && vald['@'] != null) {
+            vald = (vald as Map)['val'];
+          }
+          if (valo is List && vald is List) {
+            List rslt = valo.toList();
+            if (m['type'] == 'paths') {
+              rslt.addAll(vald.map((str)=>'${_linkManager.path}$str'));
+            } else {
+              rslt.addAll(vald);
+            }
+            rsltMap['val'] = rslt;
+          } else if (valo is Map && vald is Map) {
+            Map rslt = {};
+            vald.forEach((k,v) {
+              rslt[k] = v;
+            });
+            valo.forEach((k,v) {
+              rslt[k] = v;
+            });
+            rsltMap['val'] = rslt;
+          }
+          attributes[name] = rsltMap;
+        } else/* if (m['@'] == 'overwrite') */{
+          attributes[name] = _overrideAttributes[name];
+        }
+      } else {
+        attributes[name] = _overrideAttributes[name];
+      }
+    } else {
+      if (_downstreamAttributes.containsKey(name)) {
+        attributes[name] = _downstreamAttributes[name];
+      } else {
+        return;
+      }
+    }
+  }
+  /// initialization of override attributes
+  void updateOverrideAttributes(Map m) {
+    _overrideAttributes = m;
+    _downstreamAttributes = {};
+  }
+  
+  /// reset node cache when remote list api require a reset of the node data
+  /// this is done by a new $is in list update
+  void resetNodeCache(){
+    configs.clear();
+    attributes.clear();
+    children.clear();
+    if (_overrideAttributes != null) {
+      _overrideAttributes.forEach((k,v){
+        attributes[k] = v;
+      });
+    }
+  }
 }
 
 class RemoteLinkListController extends ListController {
@@ -467,11 +592,14 @@ class RemoteLinkListController extends ListController {
             node.configs[name] = value;
           }
         } else if (name.startsWith('@')) {
-          changes.add(name);
           if (removed) {
-            node.attributes.remove(name);
+            if ((node as RemoteLinkNode).downstreamAttributeChanged(name, null) ) {
+              changes.add(name);
+            }
           } else {
-            node.attributes[name] = value;
+            if ((node as RemoteLinkNode).downstreamAttributeChanged(name, value) ) {
+              changes.add(name);
+            }
           }
         } else {
           changes.add(name);

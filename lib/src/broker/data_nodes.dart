@@ -1,11 +1,16 @@
 part of dsbroker.broker;
 
 class BrokerDataNode extends BrokerNode {
-  static IValueStorageBucket storage;
+  static IValueStorageBucket storageBucket;
+  
+  IValueStorage storage;
   BrokerNode parent;
 
   BrokerDataNode(String path, BrokerNodeProvider provider)
     : super(path, provider) {
+    if (storageBucket != null) {
+      storage = storageBucket.getValueStorage(path);
+    }
     configs[r'$is'] = 'broker/dataNode';
     profile = provider.getOrCreateNode('/defs/profile/broker/dataNode', false);
     configs[r'$writable'] = 'write';
@@ -22,7 +27,7 @@ class BrokerDataNode extends BrokerNode {
     }
     if (storage != null &&
       (lastValueUpdate == null || lastValueUpdate.value != value)) {
-      storage.setValue(path, value);
+      storage.setValue(value);
     }
     return super.setValue(value, responder, response, maxPermission);
   }
