@@ -810,6 +810,6 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   }
 
   Responder createResponder(String dsId, String session) {
-    return new Responder(this, dsId);
+    return new BrokerResponder(this, dsId);
   }
 }

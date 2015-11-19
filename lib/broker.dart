@@ -26,6 +26,7 @@ part 'src/broker/trace_node.dart';
 part 'src/broker/throughput.dart';
 part 'src/broker/data_nodes.dart';
 part 'src/broker/tokens.dart';
+part 'src/broker/responder.dart';
 
 part 'src/http/server_link.dart';
 part 'src/http/server.dart';
