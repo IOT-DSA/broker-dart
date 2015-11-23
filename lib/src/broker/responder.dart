@@ -9,13 +9,15 @@ class BrokerResponder extends Responder {
       int rid = m['rid'];
       LocalNode parentNode = nodeProvider.getOrCreateNode(path.parentPath, false);
       LocalNode actionNode;
-      if (path.name == 'getHistory' && parentNode.attributes['@getHistoryAlias'] is Map) {
+      bool doublePermissionCheck = false; 
+      if (path.name == 'getHistory' && parentNode.attributes['@@getHistory'] is Map) {
         // alias node for getHistory action
         // TODO, should we make this a generic way of alias node
-        Map m  = parentNode.attributes['@getHistoryAlias'];
+        Map m  = parentNode.attributes['@@getHistory'];
         if (m['val'] is List && (m['val'] as List).length > 0) {
           String path = m['val'][0];
           actionNode = nodeProvider.getOrCreateNode(path, false);
+          doublePermissionCheck = true;
         } else {
           actionNode = parentNode.getChild(path.name);
         }
@@ -31,6 +33,12 @@ class BrokerResponder extends Responder {
       int maxPermit = Permission.parse(m['permit']);
       if (maxPermit < permission) {
         permission = maxPermit;
+      }
+      if (doublePermissionCheck) {
+        int permission2 = nodeProvider.permissions.getPermission(actionNode.path, this);
+        if (permission2 < permission2) {
+          permission = permission2;
+        }
       }
       if (actionNode.getInvokePermission() <= permission) {
         actionNode.invoke(m['params'], this,
