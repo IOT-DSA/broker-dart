@@ -465,7 +465,9 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
         // overwrite
         _overrideAttributes[name] = value;
       }
-      _attributeStorage.setValue(_overrideAttributes);
+      if (_attributeStorage != null) {
+        _attributeStorage.setValue(_overrideAttributes);
+      }
       mergeOverrideAttribute(name);
     } else if (method == 'remove') {
       if (_overrideAttributes != null && _overrideAttributes.containsKey(name)) {
@@ -489,11 +491,14 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     } else if (method == 'clear') {
       if (_overrideAttributes != null && _overrideAttributes.containsKey(name)) {
         _overrideAttributes.remove(name);
-        if (_overrideAttributes.isEmpty) {
-          _attributeStorage.destroy();
-        } else {
-          _attributeStorage.setValue(_overrideAttributes);
+        if (_attributeStorage != null) {
+          if (_overrideAttributes.isEmpty) {
+            _attributeStorage.destroy();
+          } else {
+            _attributeStorage.setValue(_overrideAttributes);
+          }
         }
+
         if (_downstreamAttributes.containsKey(name)) {
           attributes[name] = _downstreamAttributes[name];
         }
