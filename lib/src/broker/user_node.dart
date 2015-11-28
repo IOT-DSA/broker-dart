@@ -72,7 +72,7 @@ InvokeResponse addUserChildNode(Map params, Responder responder,
     parentNode.children[name] = node;
     parentNode.updateList(name);
     DsTimer.timerOnceBefore((responder.nodeProvider as BrokerNodeProvider).saveUsrNodes, 1000);
-    
+
   }
   return response..close(DSError.INVALID_PARAMETER);
 }
@@ -104,7 +104,7 @@ InvokeResponse addUserLink(Map params, Responder responder, InvokeResponse respo
     String path = '${parentNode.path}/$name';
     parentNode.provider._id2connPath[userDsId] = path;
     parentNode.provider._connPath2id[path] = userDsId;
-    
+
     ServerLink link = parentNode.provider.getLinkAndConnectNode(userDsId);
     if (link != null) {
       link.close();
@@ -115,10 +115,11 @@ InvokeResponse addUserLink(Map params, Responder responder, InvokeResponse respo
     parentNode.children[name] = node;
     parentNode.updateList(name);
     DsTimer.timerOnceBefore((responder.nodeProvider as BrokerNodeProvider).saveUsrNodes, 1000);
-    
+
   }
   return response..close(DSError.INVALID_PARAMETER);
 }
+
 Map userNodeFunctions = {
   "broker": {
     "userNode": {"addChild": addUserChildNode, "addLink": addUserLink},

@@ -3,11 +3,13 @@ part of dsbroker.broker;
 class TokenGroupNode extends BrokerStaticNode {
   // a token map used by both global tokens, and user tokens
   static Map<String, TokenNode> tokens = new Map<String, TokenNode>();
-  
+
   static Map<String, TokenNode> _trustedTokens = {};
+
   static Map<String, TokenNode> get trustedTokens => _trustedTokens;
 
-  static TokenNode createTrustedToken(String name, BrokerNodeProvider provider) {
+  static TokenNode createTrustedToken(String name,
+      BrokerNodeProvider provider) {
     if (_trustedTokens.containsKey(name)) {
       return _trustedTokens[name];
     }
@@ -21,7 +23,7 @@ class TokenGroupNode extends BrokerStaticNode {
     _trustedTokens[name] = node;
     return node;
   }
-  
+
   static String makeToken() {
     List<int> tokenCodes = new List<int>(48);
     int i = 0;
@@ -41,12 +43,12 @@ class TokenGroupNode extends BrokerStaticNode {
     }
     return rslt;
   }
-  
+
   static TokenNode findTokenNode(String token, String dsId) {
     if (token.length < 16) {
       return null;
     }
-    String tokenId = token.substring(0,16);
+    String tokenId = token.substring(0, 16);
     String tokenHash = token.substring(16);
     if (!tokens.containsKey(tokenId)) {
       return null;
@@ -61,9 +63,10 @@ class TokenGroupNode extends BrokerStaticNode {
         return null;
       }
     }
-    
-    
-    String hashStr = CryptoProvider.sha256(UTF8.encode('$dsId${tokenNode.token}'));
+
+
+    String hashStr = CryptoProvider.sha256(
+        const Utf8Encoder().convert('$dsId${tokenNode.token}'));
     if (hashStr == tokenHash) {
       return tokenNode;
     }
@@ -71,6 +74,7 @@ class TokenGroupNode extends BrokerStaticNode {
   }
 
   String groupId;
+
   TokenGroupNode(String path, BrokerNodeProvider provider, this.groupId)
       : super(path, provider) {
     configs[r'$is'] = 'broker/tokenGroup';
@@ -79,6 +83,7 @@ class TokenGroupNode extends BrokerStaticNode {
   }
 
   bool _loaded = false;
+
   void load(Map m) {
     if (_loaded) {
       configs.clear();
@@ -109,6 +114,7 @@ class TokenNode extends BrokerNode {
   TokenGroupNode parent;
   String id;
   String token;
+
   TokenNode(String path, BrokerNodeProvider provider, this.parent, this.id)
       : super(path, provider) {
     configs[r'$is'] = 'broker/token';
@@ -118,10 +124,12 @@ class TokenNode extends BrokerNode {
       provider.setNode(path, this);
     }
   }
+
   void load(Map m) {
     super.load(m);
     init();
   }
+
   /// initialize timeRange and count
   void init() {
     if (configs[r'$$timeRange'] is String) {
@@ -129,8 +137,12 @@ class TokenNode extends BrokerNode {
       List dates = s.split('/');
       if (dates.length == 2) {
         try {
-          ts0 = DateTime.parse(dates[0]).millisecondsSinceEpoch;
-          ts1 = DateTime.parse(dates[1]).millisecondsSinceEpoch;
+          ts0 = DateTime
+              .parse(dates[0])
+              .millisecondsSinceEpoch;
+          ts1 = DateTime
+              .parse(dates[1])
+              .millisecondsSinceEpoch;
         } catch (err) {
           ts0 = -1;
           ts1 = -1;
@@ -146,14 +158,15 @@ class TokenNode extends BrokerNode {
     //TODO implement target position
     //TODO when target position is gone, token should be removed
   }
+
   /// get the node where children should be connected
-  BrokerNode getTargetNode(){
+  BrokerNode getTargetNode() {
     // TODO, allow user to define the target node for his own token
     return provider.connsNode;
   }
-  
+
   void useCount() {
-    if (count >0) {
+    if (count > 0) {
       count--;
       configs[r'$$count'] = count;
       updateList(r'$$count');

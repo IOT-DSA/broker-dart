@@ -9,7 +9,7 @@ class BrokerResponder extends Responder {
       int rid = m['rid'];
       LocalNode parentNode = nodeProvider.getOrCreateNode(path.parentPath, false);
       LocalNode actionNode;
-      bool doublePermissionCheck = false; 
+      bool doublePermissionCheck = false;
       if (path.name == 'getHistory' && parentNode.attributes['@@getHistory'] is Map) {
         // alias node for getHistory action
         // TODO, should we make this a generic way of alias node
@@ -34,12 +34,14 @@ class BrokerResponder extends Responder {
       if (maxPermit < permission) {
         permission = maxPermit;
       }
+
       if (doublePermissionCheck) {
         int permission2 = nodeProvider.permissions.getPermission(actionNode.path, this);
         if (permission2 < permission2) {
           permission = permission2;
         }
       }
+
       if (actionNode.getInvokePermission() <= permission) {
         actionNode.invoke(m['params'], this,
             addResponse(new InvokeResponse(this, rid, parentNode, actionNode, path.name)), parentNode,
@@ -51,5 +53,5 @@ class BrokerResponder extends Responder {
       closeResponse(m['rid'], error: DSError.INVALID_PATH);
     }
   }
-  
+
 }

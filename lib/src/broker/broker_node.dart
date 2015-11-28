@@ -38,12 +38,14 @@ class BrokerNode extends LocalNodeImpl with BrokerNodePermission{
     return permission;
   }
 }
+
 /// nodes that automatic add itself to broker tree and always stay there
 class BrokerStaticNode extends BrokerNode {
   BrokerStaticNode(String path, BrokerNodeProvider provider) : super(path, provider) {
     provider.setNode(path, this);
   }
 }
+
 /// Version node
 class BrokerVersionNode extends BrokerStaticNode {
   static BrokerVersionNode instance;
