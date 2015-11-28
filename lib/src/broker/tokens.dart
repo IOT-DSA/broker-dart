@@ -155,13 +155,13 @@ class TokenNode extends BrokerNode {
     if (configs[r'$$token'] is String) {
       token = configs[r'$$token'];
     }
-    //TODO implement target position
-    //TODO when target position is gone, token should be removed
+    // TODO: implement target position
+    // TODO: when target position is gone, token should be removed
   }
 
   /// get the node where children should be connected
   BrokerNode getTargetNode() {
-    // TODO, allow user to define the target node for his own token
+    // TODO: allow user to define the target node for his own token
     return provider.connsNode;
   }
 

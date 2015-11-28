@@ -8,7 +8,7 @@ class DsSimpleLinkManager implements ServerLinkManager {
     return true;
   }
 
-  ServerLink getLinkAndConnectNode(String dsId, {String sessionId: ''}) {
+  ServerLink getLinkAndConnectNode(String dsId, {String sessionId: ""}) {
     return _links[dsId];
   }
 
@@ -23,7 +23,7 @@ class DsSimpleLinkManager implements ServerLinkManager {
   }
 
   Responder getResponder(String dsId, NodeProvider nodeProvider,
-      [String sessionId = '']) {
+      [String sessionId = ""]) {
     return new Responder(nodeProvider);
   }
 
@@ -31,7 +31,7 @@ class DsSimpleLinkManager implements ServerLinkManager {
   }
 
   String getLinkPath(String dsId, String token) {
-    return '/$dsId';
+    return "/$dsId";
   }
 }
 
@@ -48,6 +48,7 @@ class DsHttpServer {
       {int httpPort: 8080,
       int httpsPort: 8443,
       String certificateName,
+      sslContext: false,
       linkManager,
       this.nodeProvider})
       : _linkManager =
@@ -56,7 +57,7 @@ class DsHttpServer {
     onServerReady = completer.future;
     if (httpPort > 0) {
       HttpServer.bind(address, httpPort).then((server) {
-        logger.info('Listening on HTTP port $httpPort');
+        logger.info("Listening on HTTP port $httpPort");
         server.listen(_handleRequest);
         if (!completer.isCompleted) {
           completer.complete();
@@ -68,14 +69,28 @@ class DsHttpServer {
     }
 
     if (httpsPort > 0 && certificateName != null) {
-      HttpServer
-          .bindSecure(address, httpsPort, certificateName: certificateName)
-          .then((server) {
-        logger.info('Listening on HTTPS port $httpsPort');
-        server.listen(_handleRequest);
-      }).catchError((Object err) {
-        logger.severe(err);
-      });
+      if (certificateName != null && certificateName.isNotEmpty) {
+        Future future;
+        if (sslContext != false) {
+          var func = HttpServer
+              .bindSecure;
+          future = Function.apply(func, [address, httpsPort, sslContext], {
+            #shared: true
+          });
+        } else {
+          var func = HttpServer
+              .bindSecure;
+          future = Function.apply(func, [address, httpPort], {
+            #shared: true,
+            #certificateName: certificateName
+          });
+        }
+
+        future.then((HttpServer server) {
+          server.listen(_handleRequest, onError: (e) {
+          }, cancelOnError: false);
+        });
+      }
     }
   }
 
@@ -109,7 +124,7 @@ class DsHttpServer {
           origin = "*";
         }
 
-        response.headers.set('Access-Control-Allow-Origin', origin);
+        response.headers.set("Access-Control-Allow-Origin", origin);
         response.close();
         return;
       }
@@ -122,26 +137,21 @@ class DsHttpServer {
         return;
       }
 
-      String dsId = request.uri.queryParameters['dsId'];
+      String dsId = request.uri.queryParameters["dsId"];
 
       if (dsId == null || dsId.length < 43) {
-//        updateResponseBeforeWrite(request, HttpStatus.BAD_REQUEST);
         request.response.close();
         return;
       }
 
       switch (request.requestedUri.path) {
-        case '/conn':
+        case "/conn":
           _handleConn(request, dsId);
           break;
-//        case '/http':
-//          _handleHttpUpdate(request, dsId);
-//          break;
-        case '/ws':
+        case "/ws":
           _handleWsUpdate(request, dsId);
           break;
         default:
-//          updateResponseBeforeWrite(request, HttpStatus.BAD_REQUEST);
           request.response.close();
           break;
       }
@@ -176,25 +186,25 @@ class DsHttpServer {
         }
         String str = const Utf8Decoder().convert(merged);
         Map m = DsJson.decode(str);
-        
+
         // validate the input structure
-        if (m['linkData'] != null && m['linkData'] is! Map){
+        if (m["linkData"] != null && m["linkData"] is! Map) {
           throw HttpStatus.BAD_REQUEST;
         }
-        if (m['formats'] != null && m['formats'] is! List){
+        if (m["formats"] != null && m["formats"] is! List) {
           throw HttpStatus.BAD_REQUEST;
         }
-        
+
         HttpServerLink link = _linkManager.getLinkAndConnectNode(dsId);
-             
+
         if (link == null) {
-          String publicKeyPointStr = m['publicKey'];
+          String publicKeyPointStr = m["publicKey"];
           var bytes = Base64.decode(publicKeyPointStr);
           if (bytes == null) {
             // public key is invalid
             throw HttpStatus.BAD_REQUEST;
           }
-          
+
           link = new HttpServerLink(
               dsId, new PublicKey.fromBytes(bytes), _linkManager, token: tokenHash,
               nodeProvider: nodeProvider, enableTimeout: true);
@@ -204,18 +214,18 @@ class DsHttpServer {
             // dsId doesn't match public key
             throw HttpStatus.BAD_REQUEST;
           }
-          
-          if (!_linkManager.addLink(link) ) {
+
+          if (!_linkManager.addLink(link)) {
             throw HttpStatus.UNAUTHORIZED;
           }
         }
-        
-        link.initLink(request, m['isRequester'] == true,
-            m['isResponder'] == true, dsId, publicKey,
-            updateInterval: updateInterval, linkData:m['linkData'], formats:m['formats']);
+
+        link.initLink(request, m["isRequester"] == true,
+            m["isResponder"] == true, dsId, publicKey,
+            updateInterval: updateInterval, linkData:m["linkData"], formats:m["formats"]);
       } catch (err) {
         if (err is int) {
-          // TODO need protection because changing statusCode itself can throw
+          // TODO: need protection because changing statusCode itself can throw
           updateResponseBeforeWrite(request, err);
         } else {
           updateResponseBeforeWrite(request);
@@ -224,17 +234,6 @@ class DsHttpServer {
       }
     });
   }
-
-//  void _handleHttpUpdate(HttpRequest request, String dsId) {
-//    bool trusted = request.requestedUri.host == '127.0.0.1';
-//
-//    HttpServerLink link = _linkManager.getLink(dsId);
-//    if (link != null) {
-//      link.handleHttpUpdate(request, trusted);
-//    } else {
-//      throw HttpStatus.UNAUTHORIZED;
-//    }
-//  }
 
   void _handleWsUpdate(HttpRequest request, String dsId) {
     HttpServerLink link = _linkManager.getLinkAndConnectNode(dsId);

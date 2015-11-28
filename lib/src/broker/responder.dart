@@ -53,5 +53,4 @@ class BrokerResponder extends Responder {
       closeResponse(m['rid'], error: DSError.INVALID_PATH);
     }
   }
-
 }

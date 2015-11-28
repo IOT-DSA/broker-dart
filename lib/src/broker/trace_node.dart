@@ -5,17 +5,17 @@ class BrokerTraceNode extends BrokerHiddenNode {
   static void init(BrokerNodeProvider broker) {
     if (traceNode == null) {
       traceNode = new BrokerTraceNode(broker);
-      broker.setNode('/sys/trace', traceNode);
-      broker.setNode('/sys/trace/traceRequester', traceNode.traceRequester);
-      broker.setNode('/sys/trace/traceConnection', traceNode.traceConnection);
+      broker.setNode("/sys/trace", traceNode);
+      broker.setNode("/sys/trace/traceRequester", traceNode.traceRequester);
+      broker.setNode("/sys/trace/traceConnection", traceNode.traceConnection);
     }
   }
 
-  BrokerTraceNode(BrokerNodeProvider provider) : super('/sys/trace', provider) {
+  BrokerTraceNode(BrokerNodeProvider provider) : super("/sys/trace", provider) {
     traceRequester = new BrokerTraceRequesterNode(provider);
     traceConnection = new BrokerTraceConnectionNode(provider);
-    children['traceRequester'] = traceRequester;
-    children['traceConnection'] = traceConnection;
+    children["traceRequester"] = traceRequester;
+    children["traceConnection"] = traceConnection;
   }
 
   BrokerTraceRequesterNode traceRequester;
@@ -47,15 +47,15 @@ class _BrokerTraceResponderListener {
 
   void onTrace(ResponseTrace update) {
     if (update == null) return;
-    
-    if (update.change == '+') {
-      if (update.type == 'subscribe') {
+
+    if (update.change == "+") {
+      if (update.type == "subscribe") {
         cachedSubscription[update.path] = update;
       } else {
         cachedResponses[update.rid] = update;
       }
-    } else if (update.change == '-') {
-      if (update.type == 'subscribe') {
+    } else if (update.change == "-") {
+      if (update.type == "subscribe") {
         cachedSubscription.remove(update.path);
       } else {
         cachedResponses.remove(update.rid);
@@ -84,23 +84,23 @@ class _BrokerTraceResponderListener {
 
 class BrokerTraceRequesterNode extends BrokerNode {
   BrokerTraceRequesterNode(BrokerNodeProvider provider)
-      : super('/sys/trace/traceRequester', provider) {
-    configs[r'$invokable'] = 'config';
-    configs[r'$result'] = 'stream';
-    configs[r'$params'] = [
+      : super("/sys/trace/traceRequester", provider) {
+    configs[r"$invokable"] = "config";
+    configs[r"$result"] = "stream";
+    configs[r"$params"] = [
       {
-        'name': 'requester',
-        'type': 'string',
-        'placeholder': 'full path to the requester dslink'
+        "name": "requester",
+        "type": "string",
+        "placeholder": "full path to the requester dslink"
       },
-      {'name': 'sessionId', 'type': 'string'}
+      {"name": "sessionId", "type": "string"}
     ];
-    configs[r'$columns'] = [
-      {'name': 'path', 'type': 'string'},
-      {'name': 'type', 'type': 'string'},
-      {'name': 'rid', 'type': 'number'},
-      {'name': 'action', 'type': 'string'},
-      {'name': 'change', 'type': 'string'},
+    configs[r"$columns"] = [
+      {"name": "path", "type": "string"},
+      {"name": "type", "type": "string"},
+      {"name": "rid", "type": "number"},
+      {"name": "action", "type": "string"},
+      {"name": "change", "type": "string"},
     ];
   }
 
@@ -111,9 +111,9 @@ class BrokerTraceRequesterNode extends BrokerNode {
   InvokeResponse invoke(Map params, Responder responder,
       InvokeResponse response, LocalNode parentNode,
       [int maxPermission = Permission.CONFIG]) {
-    Object path = params['requester'];
-    Object sessionId = params['sessionId'];
-    if (sessionId == null) sessionId = '';
+    Object path = params["requester"];
+    Object sessionId = params["sessionId"];
+    if (sessionId == null) sessionId = "";
     Node node = provider.getOrCreateNode(path, false);
     if (path is String && sessionId is String && node is RemoteLinkRootNode) {
       if (node._linkManager.responders != null && node._linkManager.responders.containsKey(sessionId)) {
@@ -130,7 +130,7 @@ class BrokerTraceRequesterNode extends BrokerNode {
 }
 class BrokerTraceConnectionNode extends BrokerNode {
   BrokerTraceConnectionNode(BrokerNodeProvider provider)
-      : super('/sys/trace/traceConnection', provider) {
-    configs[r'$invokable'] = 'config';
+      : super("/sys/trace/traceConnection", provider) {
+    configs[r"$invokable"] = "config";
   }
 }

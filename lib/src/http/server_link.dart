@@ -77,7 +77,7 @@ class HttpServerLink implements ServerLink {
   bool isResponder = true;
 
   Map pendingLinkData;
-  
+
   initLink(HttpRequest request, bool clientRequester, bool clientResponder,
       String serverDsId, String serverKey,
       {String wsUri: '/ws',
@@ -147,43 +147,6 @@ class HttpServerLink implements ServerLink {
     }
   }
 
-//  void handleHttpUpdate(HttpRequest request, bool trusted) {
-//    String saltS = request.uri.queryParameters['authS'];
-//    if (saltS != null) {
-//      if (connection is HttpServerConnection && verifySalt(1, saltS)) {
-//        // handle http short polling
-//        (connection as HttpServerConnection).handleInputS(request, salts[1]);
-//        return;
-//      } else {
-//        throw HttpStatus.UNAUTHORIZED;
-//      }
-//    }
-//
-//    if (!trusted && !verifySalt(2, request.uri.queryParameters['authL'])) {
-//      throw HttpStatus.UNAUTHORIZED;
-//    }
-////    if (requester == null) {
-////      throw HttpStatus.FORBIDDEN;
-////    }
-//    if (connection != null && connection is! HttpServerConnection) {
-//      connection.close();
-//      connection = null;
-//    }
-//    if (connection == null) {
-//      connection = new HttpServerConnection();
-//      if (responder != null && isResponder) {
-//        responder.connection = connection.responderChannel;
-//      }
-//      if (requester != null && isRequester) {
-//        requester.connection = connection.requesterChannel;
-//        if (!onRequesterReadyCompleter.isCompleted) {
-//          onRequesterReadyCompleter.complete(requester);
-//        }
-//      }
-//    }
-//    connection.addServerCommand('saltL', salts[2]);
-//    (connection as HttpServerConnection).handleInput(request);
-//  }
 
   WebSocketConnection wsconnection;
   void handleWsUpdate(HttpRequest request, bool trusted) {
@@ -215,15 +178,6 @@ class HttpServerLink implements ServerLink {
             onRequesterReadyCompleter.complete(requester);
           }
         }
-      //});
-
-//      if (connection is! HttpServerConnection) {
-//        // work around for backward compatibility
-//        // TODO(rinick): remove this when all clients send blank data to initialize ws
-//        wsconnection.onRequestReadyCompleter
-//            .complete(wsconnection.requesterChannel);
-//        ;
-//      }
     }).catchError((e) {
       try {
         if (e is WebSocketException) {

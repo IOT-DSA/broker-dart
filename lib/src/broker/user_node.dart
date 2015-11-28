@@ -77,7 +77,6 @@ InvokeResponse addUserChildNode(Map params, Responder responder,
   return response..close(DSError.INVALID_PARAMETER);
 }
 
-
 InvokeResponse addUserLink(Map params, Responder responder, InvokeResponse response,
     LocalNode parentNode) {
   Object name = params['Name'];
@@ -115,7 +114,6 @@ InvokeResponse addUserLink(Map params, Responder responder, InvokeResponse respo
     parentNode.children[name] = node;
     parentNode.updateList(name);
     DsTimer.timerOnceBefore((responder.nodeProvider as BrokerNodeProvider).saveUsrNodes, 1000);
-
   }
   return response..close(DSError.INVALID_PARAMETER);
 }

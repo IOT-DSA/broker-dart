@@ -8,8 +8,8 @@ class BrokerNode extends LocalNodeImpl with BrokerNodePermission{
   @override
   void load(Map m) {
     super.load(m);
-    if (m['?permissions'] is List) {
-      loadPermission(m['?permissions']);
+    if (m["?permissions"] is List) {
+      loadPermission(m["?permissions"]);
     }
   }
 
@@ -18,7 +18,7 @@ class BrokerNode extends LocalNodeImpl with BrokerNodePermission{
     Map rslt = super.serialize(withChildren);
     List permissionData = this.serializePermission();
     if (permissionData != null) {
-      rslt['?permissions'] = permissionData;
+      rslt["?permissions"] = permissionData;
     }
     return rslt;
   }
@@ -85,27 +85,27 @@ class ClearConnsAction extends BrokerStaticNode {
 
 class RootNode extends BrokerNode {
   RootNode(String path, BrokerNodeProvider provider) : super(path, provider) {
-    configs[r'$is'] = 'dsa/broker';
+    configs[r"$is"] = "dsa/broker";
   }
 
   bool _loaded = false;
 
   void load(Map m) {
     if (_loaded) {
-      throw 'root node can not be initialized twice';
+      throw "root node can not be initialized twice";
     }
 
     m.forEach((String key, value) {
-      if (key.startsWith(r'$')) {
+      if (key.startsWith(r"$")) {
         configs[key] = value;
-      } else if (key.startsWith('@')) {
+      } else if (key.startsWith("@")) {
         attributes[key] = value;
       } else if (value is Map) {
         BrokerNode node;
-        if (value == 'defs') {
-          node = new BrokerHiddenNode('/$key', provider);
+        if (value == "defs") {
+          node = new BrokerHiddenNode("/$key", provider);
         } else {
-          node = new BrokerNode('/$key', provider);
+          node = new BrokerNode("/$key", provider);
         }
 
         node.load(value);
@@ -284,7 +284,7 @@ class UpstreamUrlNode extends BrokerNode {
       var p = new Path(path).parentPath;
       UpstreamBrokerNode un = provider.getOrCreateNode(p, false);
 
-      un.provider.removeLink(un.link.link, '@upstream@${un.name}', force: true);
+      un.provider.removeLink(un.link.link, "@upstream@${un.name}", force: true);
       un.stop();
 
       un.url = value.toString();
@@ -403,7 +403,7 @@ class UpstreamBrokerNode extends BrokerNode {
 
     BrokerNodeProvider p = provider;
     var level = logger.level;
-    String upstreamId = '@upstream@$name';
+    String upstreamId = "@upstream@$name";
     Requester overrideRequester = provider.getRequester(upstreamId);
     Responder overrideResponder = provider.getResponder(upstreamId, provider);
     link = new LinkProvider(["--broker=${url}"], ourName + "-", enableHttp: false, nodeProvider: p, isRequester: true,
@@ -424,8 +424,8 @@ class UpstreamBrokerNode extends BrokerNode {
     enabled = true;
     link.onRequesterReady.then((Requester requester) {
       if (link.link.remotePath != null) {
-        linkManager.rootNode.configs[r'$remotePath'] = link.link.remotePath;
-        linkManager.rootNode.updateList(r'$remotePath');
+        linkManager.rootNode.configs[r"$remotePath"] = link.link.remotePath;
+        linkManager.rootNode.updateList(r"$remotePath");
       }
     });
   }
@@ -438,7 +438,7 @@ class UpstreamBrokerNode extends BrokerNode {
     link.stop();
     BrokerNodeProvider p = provider;
 
-    p.removeLink(link.link, '@upstream@$name', force: true);
+    p.removeLink(link.link, "@upstream@$name", force: true);
     ien.updateValue(false);
     enabled = false;
   }
@@ -447,27 +447,27 @@ class UpstreamBrokerNode extends BrokerNode {
 
 class BrokerHiddenNode extends BrokerNode {
   BrokerHiddenNode(String path, BrokerNodeProvider provider) : super(path, provider) {
-    configs[r'$hidden'] = true;
+    configs[r"$hidden"] = true;
   }
 
   Map getSimpleMap() {
-    Map rslt = {r'$hidden':true};
-    if (configs.containsKey(r'$is')) {
-      rslt[r'$is'] = configs[r'$is'];
+    Map rslt = {r"$hidden":true};
+    if (configs.containsKey(r"$is")) {
+      rslt[r"$is"] = configs[r"$is"];
     }
-    if (configs.containsKey(r'$type')) {
-      rslt[r'$type'] = configs[r'$type'];
+    if (configs.containsKey(r"$type")) {
+      rslt[r"$type"] = configs[r"$type"];
     }
-    if (configs.containsKey(r'$name')) {
-      rslt[r'$name'] = configs[r'$name'];
+    if (configs.containsKey(r"$name")) {
+      rslt[r"$name"] = configs[r"$name"];
     }
-    if (configs.containsKey(r'$invokable')) {
-      rslt[r'$invokable'] = configs[r'$invokable'];
+    if (configs.containsKey(r"$invokable")) {
+      rslt[r"$invokable"] = configs[r"$invokable"];
     }
-    if (configs.containsKey(r'$writable')) {
-      rslt[r'$writable'] = configs[r'$writable'];
+    if (configs.containsKey(r"$writable")) {
+      rslt[r"$writable"] = configs[r"$writable"];
     }
-    // TODO add permission of current requester
+    // TODO: add permission of current requester
     return rslt;
   }
 }

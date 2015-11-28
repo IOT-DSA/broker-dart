@@ -139,7 +139,7 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
 class RemoteLinkNode extends RemoteNode implements LocalNode {
   /// storage bucket for override attributes
   static IValueStorageBucket storageBucket;
-  
+
   final BrokerNodeProvider provider;
 
   ListController createListController(Requester requester) {
@@ -236,7 +236,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     _valueReady = false;
     _lastValueUpdate = null;
   }
-  
+
   final String path;
 
   /// root of the link
@@ -331,7 +331,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
       String name, Object value, Responder responder, Response response) {
     if (value is Map && value['@'] != null) {
       overrideArrtibuteChanged(name, value);
-      return response..close(); 
+      return response..close();
     }
     // TODO check permission on RemoteLinkRootNode
     _linkManager.requester.set('$remotePath/$name', value).then((update) {
@@ -415,8 +415,8 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
       addChild(name, value);
     }
   }
-  
-  
+
+
   IValueStorage _attributeStorage;
   Map _overrideAttributes;
   Map _downstreamAttributes;
@@ -577,7 +577,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     _overrideAttributes = m;
     _downstreamAttributes = {};
   }
-  
+
   /// reset node cache when remote list api require a reset of the node data
   /// this is done by a new $is in list update
   void resetNodeCache(){
@@ -585,7 +585,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     attributes.clear();
     children.clear();
     if (_overrideAttributes != null) {
-      _overrideAttributes.forEach((k,v){
+      _overrideAttributes.forEach((k,v) {
         attributes[k] = v;
       });
     }
@@ -597,7 +597,7 @@ class RemoteLinkListController extends ListController {
 
   void onUpdate(String streamStatus, List updates, List columns, Map meta, DSError error) {
     bool reseted = false;
-    // TODO implement error handling
+    // TODO: implement error handling
     if (updates != null) {
       for (Object update in updates) {
         String name;

@@ -20,7 +20,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   String downstreamNameS;
   /// name with 2 slash
   String downstreamNameSS;
-  
+
   RootNode root;
   BrokerNode connsNode;
   BrokerNode dataNode;
@@ -29,7 +29,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   BrokerNode upstreamDataNode;
   BrokerNode quarantineNode;
   BrokerNode tokens;
-  
+
   Map rootStructure = {'users': {}, 'defs': {}, 'sys': {'tokens': {}}, 'upstream': {}};
 
   bool shouldSaveFiles = true;
@@ -37,7 +37,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   bool enabledPermission = false;
   bool enabledDataNodes = false;
   bool acceptAllConns = true;
-  
+
   BrokerNodeProvider({
     this.enabledQuarantine: false,
     this.acceptAllConns: true,
@@ -77,7 +77,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     new BrokerQueryNode("/sys/query", this);
 
     enabledPermission = defaultPermission != null;
-    
+
     if (enabledPermission) {
       root.loadPermission(
         defaultPermission); //['dgSuper','config','default','write']
@@ -96,9 +96,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     initSys();
     await loadConns();
     await loadUserNodes();
-    
+
     // tokens need to check if node still exists
-    // load token after conns and userNodes are loaded 
+    // load token after conns and userNodes are loaded
     await loadTokensNodes();
 
     if (enabledDataNodes) {
@@ -108,8 +108,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (storage != null) {
       loadOverrideAttributes();
     }
-    
-    
+
+
     if (storedData != null) {
       for (List<ISubscriptionNodeStorage> nodeData in storedData) {
         if (nodeData.length > 0) {
@@ -234,7 +234,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       });
     } catch (err) {}
   }
-  
+
   loadOverrideAttributes() async {
     IValueStorageBucket storageBucket = storage.getOrCreateValueStorageBucket('attribute');
     RemoteLinkNode.storageBucket = storageBucket;
@@ -257,7 +257,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     dataNode = new BrokerDataRoot('/data', this);
     root.children['data'] = dataNode;
     nodes['/data'] = dataNode;
-    
+
     File connsFile = new File("data.json");
     try {
       String data = await connsFile.readAsString();
@@ -411,17 +411,17 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       node = new BrokerDataNode(path, this);
       nodes[path] = node;
     }
-    
+
     if (addToTree && node.parent == null) {
        int pos = path.lastIndexOf('/');
        String parentPath = path.substring(0,pos);
        String name = path.substring(pos + 1);
-       
+
        BrokerDataNode parentNode = _getOrCreateDataNode(parentPath, true);
        parentNode.children[name] = node;
        node.parent = parentNode;
        parentNode.updateList(name);
-       
+
      }
      return node;
   }
@@ -539,7 +539,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     }
     return node;
   }
-  
+
   bool clearNode(BrokerNode node){
     // TODO, keep it in memory if there are pending subscription
     // and remove it when subscription ends
@@ -573,8 +573,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (_id2connPath.containsKey(fullId)) {
       return _id2connPath[fullId];
       // TODO is it possible same link get added twice?
-    } 
-    
+    }
+
     if (fullId.startsWith('@upstream@')) {
       String connName = fullId.substring(10);
       String connPath = '/upstream/$connName';
@@ -621,7 +621,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
           break;
         }
       }
-      
+
       DsTimer.timerOnceBefore(saveConns, 3000);
       return connPath;
     } else {
@@ -637,9 +637,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       TokenNode tokenNode = TokenGroupNode.findTokenNode(token, fullId);
       if (tokenNode != null) {
         BrokerNode target = tokenNode.getTargetNode();
-        
+
         String connPath;
-        
+
         String folderPath = '${target.path}/';
 
         String dsId = fullId;
@@ -665,7 +665,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         return connPath;
       }
     }
-    
+
     // fall back to normal path searching when it fails
     return makeConnPath(fullId);
   }
@@ -697,7 +697,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       conn = node._linkManager;
       conn.inTree = true;
 
-      logger.info('new node added at $connPath');
+      logger.info('Link connected at ${connPath}');
     }
 
     if (!conn.inTree) {
@@ -726,12 +726,11 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       if (str.length >= 43 && (link.session == null || link.session == '')) {
         // don't create node for requester node with session
         connPath = makeConnPath(str);
-        
+
         if (connPath != null) {
-          var node = getOrCreateNode(connPath, false)
-                    ..configs[r'$$dsId'] = str;
-                  logger.info('new node added at $connPath');
-                
+          getOrCreateNode(connPath, false)
+            ..configs[r'$$dsId'] = str;
+          logger.info('Link connected at ${connPath}');
         } else {
           return false;
         }
@@ -750,7 +749,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     } else if (_links[str] != null) {
       // add link to tree when it's not user link
       String connPath = makeConnPath(str);
-      
+
       if (connPath == null) {
         // when link is not allowed, makeConnPath() returns null
         return null;
@@ -780,14 +779,13 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (_id2connPath.containsKey(dsId)){
       var node = getOrCreateNode(_id2connPath[dsId]);
       node.configs[r'$linkData'] = m;
-      //node.updateList(r'$linkData');
     }
   }
-  
+
   Requester getRequester(String dsId) {
     String connPath = makeConnPath(dsId);
     if (connPath == null) return null;
-    
+
     if (conns.containsKey(connPath)) {
       return conns[connPath].requester;
     }
