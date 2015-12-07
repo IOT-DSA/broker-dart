@@ -241,7 +241,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     logger.finest('loading proxy attributes');
     Map values = await storageBucket.load();
     values.forEach((key, val){
-      LocalNode node = this.getOrCreateNode(key);
+      LocalNode node = this.getOrCreateNode(key, false);
       if (node is RemoteLinkNode && node._linkManager.inTree) {
         node.updateOverrideAttributes(val);
       } else {
@@ -777,7 +777,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   void updateLinkData(String dsId, Map m) {
     if (_id2connPath.containsKey(dsId)){
-      var node = getOrCreateNode(_id2connPath[dsId]);
+      var node = getOrCreateNode(_id2connPath[dsId], false);
       node.configs[r'$linkData'] = m;
     }
   }

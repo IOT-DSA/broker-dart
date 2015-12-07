@@ -7,7 +7,7 @@ class BrokerQueryNode extends BrokerStaticNode {
     : super(path, provider) {
     _manager = new BrokerQueryManager(provider);
     configs[r'$name'] = 'Query';
-    configs[r'$invokable'] = 'config';
+    configs[r'$invokable'] = 'write';
     configs[r'$result'] = 'stream';
     configs[r'$params'] = [
       {
