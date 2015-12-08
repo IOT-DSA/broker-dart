@@ -3,14 +3,23 @@ part of dsbroker.broker;
 class ThroughPutController {
   static ThroughPutNode messagesOutPerSecond;
   static ThroughPutNode dataOutPerSecond;
+  static ThroughPutNode packageOutPerSecond;
+  
   static ThroughPutNode messagesInPerSecond;
   static ThroughPutNode dataInPerSecond;
+  static ThroughPutNode packageInPerSecond;
+  
   static void initNodes(NodeProvider provider) {
     messagesOutPerSecond = new ThroughPutNode(
         "/sys/messagesOutPerSecond", provider)..configs[r"$type"] = "number";
     messagesInPerSecond = new ThroughPutNode(
         "/sys/messagesInPerSecond", provider)..configs[r"$type"] = "number";
 
+    packageOutPerSecond = new ThroughPutNode(
+        "/sys/packageOutPerSecond", provider)..configs[r"$type"] = "number";
+    packageInPerSecond = new ThroughPutNode(
+        "/sys/packageInPerSecond", provider)..configs[r"$type"] = "number";
+    
     dataOutPerSecond = new ThroughPutNode("/sys/dataOutPerSecond", provider)
       ..configs[r"$type"] = "number"..configs[r"@unit"] = "bytes";
     dataInPerSecond = new ThroughPutNode("/sys/dataInPerSecond", provider)
@@ -26,10 +35,15 @@ class ThroughPutController {
         force: true);
     dataOutPerSecond.updateValue(WebSocketConnection.dataOut, force: true);
 
+    packageInPerSecond.updateValue(WebSocketConnection.packageIn, force: true);
+    packageOutPerSecond.updateValue(WebSocketConnection.packageOut, force: true);
+    
     WebSocketConnection.messageIn = 0;
     WebSocketConnection.dataIn = 0;
+    WebSocketConnection.packageIn = 0;
     WebSocketConnection.messageOut = 0;
     WebSocketConnection.dataOut = 0;
+    WebSocketConnection.packageOut = 0;
   }
 
   static void set throughputNeeded(bool val) {
@@ -43,6 +57,8 @@ class ThroughPutController {
         WebSocketConnection.dataIn = 0;
         WebSocketConnection.messageOut = 0;
         WebSocketConnection.dataOut = 0;
+        WebSocketConnection.packageOut = 0;
+        WebSocketConnection.packageIn = 0;
         _timer = new Timer.periodic(new Duration(seconds: 1), changeValue);
       }
     } else {
