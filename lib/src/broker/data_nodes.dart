@@ -139,6 +139,30 @@ void removeDataNodeRecursive(BrokerDataNode node, String name) {
   node.clearValue();
 }
 
+InvokeResponse streamingSet(Map params, Responder responder,
+  InvokeResponse response, LocalNode parentNode) {
+  // return true when params are valid
+  bool streamingSetReqParams(Map m) {
+    Object path = m['Path'];
+    Object value = m['Value'];
+    if (path is String && path.startsWith('/data/')) {
+      BrokerDataNode node = (parentNode.provider as BrokerNodeProvider)._getOrCreateDataNode(path);
+      node.updateValue(value);
+      return true;
+    }
+    return false;
+  }
+  
+  if (parentNode is BrokerDataRoot && streamingSetReqParams(params)) {
+    response.onReqParams = streamingSetReqParams;
+    // leave the invoke open
+    return response;
+  }
+  return response..close(DSError.INVALID_PARAMETER);
+}
+
+
+
 Map dataNodeFunctions = {
   "broker": {
     "dataNode": {
@@ -146,6 +170,6 @@ Map dataNodeFunctions = {
       "addValue": addDataNode,
       "deleteNode": deleteDataNode
     },
-    "dataRoot": {"addNode": addDataNode, "addValue": addDataNode},
+    "dataRoot": {"addNode": addDataNode, "addValue": addDataNode, "streamingSet":streamingSet},
   }
 };
