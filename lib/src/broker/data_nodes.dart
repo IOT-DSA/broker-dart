@@ -21,9 +21,6 @@ class BrokerDataNode extends BrokerNode {
     if (parent == null) {
       // add this node to tree and create all parent levels
       provider.getOrCreateNode(path, true);
-      if (configs[r'$type'] == null) {
-        configs[r'$type'] = 'dynamic';
-      }
     }
     if (storage != null &&
       (lastValueUpdate == null || lastValueUpdate.value != value)) {
@@ -139,10 +136,10 @@ void removeDataNodeRecursive(BrokerDataNode node, String name) {
   node.clearValue();
 }
 
-InvokeResponse streamingSet(Map params, Responder responder,
+InvokeResponse publish(Map params, Responder responder,
   InvokeResponse response, LocalNode parentNode) {
   // return true when params are valid
-  bool streamingSetReqParams(Map m) {
+  bool publishReqParams(Map m) {
     Object path = m['Path'];
     Object value = m['Value'];
     if (path is String && path.startsWith('/data/')) {
@@ -153,8 +150,8 @@ InvokeResponse streamingSet(Map params, Responder responder,
     return false;
   }
   
-  if (parentNode is BrokerDataRoot && streamingSetReqParams(params)) {
-    response.onReqParams = streamingSetReqParams;
+  if (parentNode is BrokerDataRoot && publishReqParams(params)) {
+    response.onReqParams = publishReqParams;
     // leave the invoke open
     return response;
   }
@@ -170,6 +167,6 @@ Map dataNodeFunctions = {
       "addValue": addDataNode,
       "deleteNode": deleteDataNode
     },
-    "dataRoot": {"addNode": addDataNode, "addValue": addDataNode, "streamingSet":streamingSet},
+    "dataRoot": {"addNode": addDataNode, "addValue": addDataNode, "publish":publish},
   }
 };

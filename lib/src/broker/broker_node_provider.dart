@@ -409,6 +409,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     BrokerDataNode node = nodes[path];
     if (node == null) {
       node = new BrokerDataNode(path, this);
+      node.configs[r'$type'] = 'dynamic';
       nodes[path] = node;
     }
 
