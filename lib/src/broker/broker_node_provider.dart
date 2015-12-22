@@ -661,7 +661,10 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
             break;
           }
         }
-        tokenNode.useCount();
+        if (tokenNode.useToken(connPath)) {
+          Node node = getOrCreateNode(connPath, false);
+          node.configs[r'$$token'] = tokenNode.id;
+        }
         DsTimer.timerOnceBefore(saveConns, 3000);
         return connPath;
       }
@@ -773,6 +776,28 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   void removeLink(BaseLink link, String id, {bool force: false}) {
     if (_links[id] == link || force) {
       _links.remove(id);
+    }
+  }
+  void remoteLinkByPath(String path) {
+    Node node = nodes[path];
+    if (node is RemoteLinkRootNode) {
+      
+      RemoteLinkManager manager = node._linkManager;
+      
+      String dsId = _connPath2id[path];
+      if (dsId != null) {
+        BaseLink link = _links[dsId];
+        _connPath2id.remove(path);
+        _id2connPath.remove(dsId);
+        link.close();
+        _links.remove(dsId);
+        DsTimer.timerOnceAfter(saveConns, 3000);
+      }
+      
+      String name = node.path.split('/').last;
+      connsNode.children.remove(name);
+      manager.inTree = false;
+      connsNode.updateList(name);
     }
   }
 

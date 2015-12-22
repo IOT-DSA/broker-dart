@@ -111,10 +111,21 @@ class TokenNode extends BrokerNode {
   int ts0 = -1;
   int ts1 = -1;
   int count = -1;
+  
+  /// destroy token with a timer;
+  Timer timer;
+  
+  // when true, kill all dslink when token is removed
+  bool managed = false;
+  
+  List links;
+  
   TokenGroupNode parent;
   String id;
   String token;
-
+  
+ 
+  
   TokenNode(String path, BrokerNodeProvider provider, this.parent, this.id)
       : super(path, provider) {
     configs[r'$is'] = 'broker/token';
@@ -147,14 +158,30 @@ class TokenNode extends BrokerNode {
           ts0 = -1;
           ts1 = -1;
         }
+        if (ts1 > -1) {
+          int now = new DateTime.now().millisecondsSinceEpoch;
+          if (now  < ts1) {
+            timer= new Timer(new Duration(milliseconds:ts1 - now), delete); 
+          } else {
+            DsTimer.callLater(delete);
+          }
+        }
       }
     }
     if (configs[r'$$count'] is num) {
       count = (configs[r'$$count'] as num).toInt();
     }
+    if (configs[r'$$managed'] == true) {
+      managed = true;
+      if (configs[r'$$links'] is List) {
+        links = configs[r'$$links'];
+      }
+    }
+    
     if (configs[r'$$token'] is String) {
       token = configs[r'$$token'];
     }
+ 
     // TODO: implement target position
     // TODO: when target position is gone, token should be removed
   }
@@ -165,26 +192,62 @@ class TokenNode extends BrokerNode {
     return provider.connsNode;
   }
 
-  void useCount() {
+  /// return true if link is managed by token
+  bool useToken(String path) {
+    if (count > 0 || managed) {
+      DsTimer.timerOnceBefore(provider.saveTokensNodes, 1000);
+    }
     if (count > 0) {
       count--;
       configs[r'$$count'] = count;
       updateList(r'$$count');
-      DsTimer.timerOnceBefore(provider.saveTokensNodes, 1000);
     }
+    if (managed) {
+      if (links == null) {
+        links = [];
+        configs[r'$$links'] = links;
+      }
+      if (!links.contains(path)) {
+        links.add(path);
+      }
+      updateList(r'$$links');
+      return true;
+    }
+    return false;
+  }
+  
+  void delete() {
+    deleteLinks();
+    parent.children.remove(id);
+    TokenGroupNode.tokens.remove(id);
+    parent.updateList(id);
+    provider.clearNode(this);
+    DsTimer.timerOnceBefore(provider.saveTokensNodes, 1000);
+  }
+  
+  void deleteLinks(){
+    if (links != null) {
+      for (Object path in links) {
+        if (path is String) {
+          Object node = provider.getNode(path);
+          if (node is RemoteLinkRootNode) {
+            Object token = node.configs[r'$$token'];
+            if (token == id) {
+              provider.remoteLinkByPath(node.path);
+            }
+          }
+        }
+      }
+    }
+    links = null;
   }
 }
+
 
 InvokeResponse deleteTokenNode(Map params, Responder responder,
     InvokeResponse response, LocalNode parentNode) {
   if (parentNode is TokenNode) {
-    parentNode.parent.children.remove(parentNode.id);
-    TokenGroupNode.tokens.remove(parentNode.id);
-    parentNode.parent.updateList(parentNode.id);
-    parentNode.provider.clearNode(parentNode);
-
-    DsTimer.timerOnceBefore(
-        (responder.nodeProvider as BrokerNodeProvider).saveTokensNodes, 1000);
+    parentNode.delete();
     return response..close();
   }
   return response..close(DSError.INVALID_PARAMETER);
@@ -197,8 +260,9 @@ InvokeResponse addTokenNode(Map params, Responder responder,
     String tokenId = token.substring(0, 16);
     TokenNode node = new TokenNode('${parentNode.path}/$tokenId',
         parentNode.provider, parentNode, tokenId);
-    node.configs[r'$$timeRange'] = params['timeRange'];
-    node.configs[r'$$count'] = params['count'];
+    node.configs[r'$$timeRange'] = params['TimeRange'];
+    node.configs[r'$$count'] = params['Count'];
+    node.configs[r'$$managed'] = params['Managed'];
     node.configs[r'$$token'] = token;
     node.init();
     TokenGroupNode.tokens[tokenId] = node;
