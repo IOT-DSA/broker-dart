@@ -1,5 +1,7 @@
 part of dsbroker.broker;
 
+typedef Future<WebSocket> WebSocketUpgradeFunction(HttpRequest request);
+
 /// a server link for both http and ws
 class HttpServerLink implements ServerLink {
   final String dsId;
@@ -149,7 +151,12 @@ class HttpServerLink implements ServerLink {
 
 
   WebSocketConnection wsconnection;
-  void handleWsUpdate(HttpRequest request, bool trusted) {
+
+  void handleWsUpdate(HttpRequest request, bool trusted, [WebSocketUpgradeFunction upgrade]) {
+    if (upgrade == null) {
+      upgrade = WebSocketTransformer.upgrade;
+    }
+
     if (!trusted && !verifySalt(0, request.uri.queryParameters['auth'])) {
       logger.warning("$dsId was rejected due to an improper auth value");
       throw HttpStatus.UNAUTHORIZED;
@@ -159,8 +166,7 @@ class HttpServerLink implements ServerLink {
     }
     updateResponseBeforeWrite(request, null, null, true);
 
-    WebSocketTransformer.upgrade(request).then((WebSocket websocket) {
-
+    upgrade(request).then((WebSocket websocket) {
       wsconnection = createWsConnection(websocket, request.uri.queryParameters['format']);
       wsconnection.addConnCommand('salt', salts[0]);
 
