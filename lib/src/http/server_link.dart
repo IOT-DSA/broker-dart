@@ -154,7 +154,7 @@ class HttpServerLink implements ServerLink {
 
   void handleWsUpdate(HttpRequest request, bool trusted, [WebSocketUpgradeFunction upgrade]) {
     if (upgrade == null) {
-      upgrade = WebSocketTransformer.upgrade;
+      upgrade = HttpHelper.upgradeToWebSocket;
     }
 
     if (!trusted && !verifySalt(0, request.uri.queryParameters['auth'])) {
