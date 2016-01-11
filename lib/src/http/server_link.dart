@@ -9,6 +9,7 @@ class HttpServerLink implements ServerLink {
   final String token;
   String path;
   String trustedTokenHash;
+  String logName;
   Completer<Requester> onRequesterReadyCompleter = new Completer<Requester>();
 
   Future<Requester> get onRequesterReady => onRequesterReadyCompleter.future;
@@ -120,6 +121,22 @@ class HttpServerLink implements ServerLink {
     } else {
       respJson['format'] = 'json';
     }
+
+    {
+      String msg = "Handshake Response: ${respJson}";
+      String ln;
+
+      if (logName != null) {
+        ln = logName;
+      } else if (path != null) {
+        ln = "Link at ${path}";
+      } else {
+        ln = "Link ${dsId}";
+      }
+
+      logger.fine("[${ln}] ${msg}]");
+    }
+
     updateResponseBeforeWrite(request);
     request.response.write(DsJson.encode(respJson));
     request.response.close();
@@ -169,21 +186,20 @@ class HttpServerLink implements ServerLink {
     upgrade(request).then((WebSocket websocket) {
       wsconnection = createWsConnection(websocket, request.uri.queryParameters['format']);
       wsconnection.addConnCommand('salt', salts[0]);
+      if (connection != null) {
+        connection.close();
+      }
+      connection = wsconnection;
+      if (responder != null && isResponder) {
+        responder.connection = connection.responderChannel;
+      }
 
-      //wsconnection.onRequesterReady.then((channel) {
-        if (connection != null) {
-          connection.close();
+      if (requester != null && isRequester) {
+        requester.connection = connection.requesterChannel;
+        if (!onRequesterReadyCompleter.isCompleted) {
+          onRequesterReadyCompleter.complete(requester);
         }
-        connection = wsconnection;
-        if (responder != null && isResponder) {
-          responder.connection = connection.responderChannel;
-        }
-        if (requester != null && isRequester) {
-          requester.connection = connection.requesterChannel;
-          if (!onRequesterReadyCompleter.isCompleted) {
-            onRequesterReadyCompleter.complete(requester);
-          }
-        }
+      }
     }).catchError((e) {
       try {
         if (e is WebSocketException) {
@@ -205,7 +221,20 @@ class HttpServerLink implements ServerLink {
   }
 
   WebSocketConnection createWsConnection(WebSocket websocket, String format) {
-    return new WebSocketConnection(websocket, enableTimeout: enableTimeout
-        , enableAck:enableAck, useCodec:DsCodec.getCodec(format));
+    var conn = new WebSocketConnection(
+      websocket,
+      enableTimeout: enableTimeout,
+      enableAck: enableAck,
+      useCodec: DsCodec.getCodec(format)
+    );
+
+    if (logName != null) {
+      conn.logName = logName;
+    } else if (path != null) {
+      conn.logName = "Link at ${path}";
+    } else {
+      conn.logName = "Link ${dsId}";
+    }
+    return conn;
   }
 }
