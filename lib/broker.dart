@@ -14,6 +14,7 @@ import "package:dslink/utils.dart";
 import "package:dslink/src/http/websocket_conn.dart";
 import "package:dslink/query.dart";
 import "package:dslink/io.dart";
+import "package:dslink/src/storage/simple_storage.dart";
 
 part "src/broker/broker_node_provider.dart";
 part "src/broker/broker_node.dart";

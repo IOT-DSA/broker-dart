@@ -4,7 +4,6 @@ import "dart:io";
 
 import "package:dslink/client.dart";
 import "package:dslink/utils.dart";
-import "package:dslink/server.dart";
 import "package:dslink/dslink.dart";
 
 import "package:dsbroker/broker.dart";
@@ -22,7 +21,8 @@ const Map<String, String> VARS = const {
   "BROKER_HTTPS_PORT": "https_port",
   "BROKER_CERTIFICATE_NAME": "certificate_name",
   "BROKER_BROADCAST": "broadcast",
-  "BROKER_BROADCAST_URL": "broadcast_url"
+  "BROKER_BROADCAST_URL": "broadcast_url",
+  "BROKER_DOWNSTREAM_NAME": "downstream_name"
 };
 
 Future<String> getNetworkAddress() async {
@@ -51,7 +51,8 @@ main(List<String> _args) async {
       "host": "0.0.0.0",
       "port": 8080,
       "link_prefix": "broker-",
-      "broadcast": true
+      "broadcast": true,
+      "downstream_name": "downstream"
     };
 
     VARS.forEach((n, c) {
@@ -89,12 +90,13 @@ main(List<String> _args) async {
   }
 
   saveConfig() async {
-    var data = new JsonEncoder.withIndent("  ").convert(config);
+    var data = const JsonEncoder.withIndent("  ").convert(config);
     await configFile.writeAsString(data + '\n');
   }
 
   updateLogLevel(getConfig("log_level", "info"));
-  broker = new BrokerNodeProvider();
+  var downstreamName = getConfig("downstream_name", "downstream");
+  broker = new BrokerNodeProvider(downstreamName: downstreamName);
   server = new DsHttpServer.start(getConfig("host", "0.0.0.0"),
       httpPort: getConfig("port", -1),
       httpsPort: getConfig("https_port", -1),
@@ -133,7 +135,7 @@ main(List<String> _args) async {
   }
 
   await broker.loadAll();
-  
+
   if (getConfig("upstream") != null) {
     Map<String, Map<String, dynamic>> upstream = getConfig("upstream", {});
 
@@ -154,6 +156,7 @@ main(List<String> _args) async {
 const String defaultConfig = """{
   "host": "0.0.0.0",
   "port": 8080,
-  "link_prefix": "broker-"
+  "link_prefix": "broker-",
+  "downstream_name": "downstream"
 }
 """;

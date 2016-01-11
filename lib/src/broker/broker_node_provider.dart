@@ -43,9 +43,14 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     this.acceptAllConns: true,
     List defaultPermission,
     this.downstreamName: 'conns',
-    this.storage,
+    IStorageManager storage,
     this.enabledDataNodes: true
   }) {
+    if (storage == null) {
+      storage = new SimpleStorageManager("storage");
+    }
+
+    this.storage = storage;
     permissions = new BrokerPermissions();
     // initialize root nodes
     root = new RootNode('/', this);
@@ -54,6 +59,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (enabledQuarantine) {
       rootStructure['quarantine'] = {};
     }
+
     if (downstreamName == null ||
       downstreamName == '' ||
       rootStructure.containsKey(downstreamName) ||
@@ -105,10 +111,10 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       await loadDataNodes();
       registerInvokableProfile(dataNodeFunctions);
     }
+
     if (storage != null) {
       loadOverrideAttributes();
     }
-
 
     if (storedData != null) {
       for (List<ISubscriptionNodeStorage> nodeData in storedData) {
@@ -681,7 +687,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     _id2connPath[upStreamId] = connPath;
   }
 
-  RemoteLinkManager addUpStreamLink(ClientLink link, String name) {
+  RemoteLinkManager addUpstreamLink(ClientLink link, String name) {
     String upStreamId = '@upstream@$name';
     RemoteLinkManager conn;
     // TODO update children list of /$downstreamNameS node
@@ -781,9 +787,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   void remoteLinkByPath(String path) {
     Node node = nodes[path];
     if (node is RemoteLinkRootNode) {
-      
+
       RemoteLinkManager manager = node._linkManager;
-      
+
       String dsId = _connPath2id[path];
       if (dsId != null) {
         BaseLink link = _links[dsId];
@@ -793,7 +799,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         _links.remove(dsId);
         DsTimer.timerOnceAfter(saveConns, 3000);
       }
-      
+
       String name = node.path.split('/').last;
       connsNode.children.remove(name);
       manager.inTree = false;

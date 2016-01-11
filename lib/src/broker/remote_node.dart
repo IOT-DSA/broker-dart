@@ -330,7 +330,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
   Response setAttribute(
       String name, Object value, Responder responder, Response response) {
     if (value is Map && value['@'] != null) {
-      overrideArrtibuteChanged(name, value);
+      overrideAttributeChanged(name, value);
       return response..close();
     }
     // TODO check permission on RemoteLinkRootNode
@@ -421,7 +421,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
   Map _overrideAttributes;
   Map _downstreamAttributes;
   /// override attribute change from the broker
-  void overrideArrtibuteChanged(String name, Map value) {
+  void overrideAttributeChanged(String name, Map value) {
     if (_attributeStorage == null && storageBucket != null) {
       _attributeStorage = storageBucket.getValueStorage(path);
     }

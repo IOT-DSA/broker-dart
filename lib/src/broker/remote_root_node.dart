@@ -1,5 +1,9 @@
 part of dsbroker.broker;
 
+const List<String> _LINK_ROOT_ALLOWED = const [
+  r"$uid"
+];
+
 // TODO, implement special configs and attribute merging
 class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implements BrokerNode {
   RemoteLinkRootNode(
@@ -90,7 +94,7 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
   Map<String, VirtualNodePermission> pchildren = new Map<String, VirtualNodePermission>();
 
   @override
-  int getPermission (Iterator<String> paths, Responder responder, int permission) {
+  int getPermission(Iterator<String> paths, Responder responder, int permission) {
     permission = super.getPermission(paths, responder, permission);
     if (permission == Permission.CONFIG) {
       return Permission.CONFIG;
@@ -106,7 +110,7 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
   @override
   Map getSimpleMap() {
     Map m = super.getSimpleMap();
-    if (configs.containsKey(r'$linkData')){
+    if (configs.containsKey(r'$linkData')) {
       m[r'$linkData'] = configs[r'$linkData'];
     }
     return m;
@@ -148,11 +152,24 @@ class RemoteLinkRootListController extends ListController {
         } else {
           continue; // invalid response
         }
+
+        if (_LINK_ROOT_ALLOWED.contains(name) && (
+          name.startsWith(r"$") || name.startsWith("@")
+        )) {
+          Map map = name.startsWith(r"$") ? node.configs : node.attributes;
+          if (removed) {
+            map.remove(name);
+          } else {
+            map[name] = value;
+          }
+          changes.add(name);
+        }
+
         if (name.startsWith(r'$')) {
           if (!reseted &&
-              (name == r'$is' ||
-                  name == r'$base' ||
-                  (name == r'$disconnectedTs' && value is String))) {
+            (name == r'$is' ||
+              name == r'$base' ||
+              (name == r'$disconnectedTs' && value is String))) {
             if (name == r'$is') {
               if (value == 'dsa/broker') {
                 node.configs[r'$is'] = 'dsa/broker';
@@ -173,10 +190,11 @@ class RemoteLinkRootListController extends ListController {
           } else if (value is Map) {
             // TODO, also wait for children $is
             node.children[name] =
-                requester.nodeCache.updateRemoteChildNode(node, name, value);
+              requester.nodeCache.updateRemoteChildNode(node, name, value);
           }
         }
       }
+
       if (request.streamStatus != StreamStatus.initialize) {
         node.listed = true;
       }

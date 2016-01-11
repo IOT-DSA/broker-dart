@@ -84,8 +84,20 @@ class ClearConnsAction extends BrokerStaticNode {
 }
 
 class RootNode extends BrokerNode {
+  static IValueStorageBucket bucket;
+  static IValueStorage uuidStorage;
+
   RootNode(String path, BrokerNodeProvider provider) : super(path, provider) {
     configs[r"$is"] = "dsa/broker";
+    bucket = provider.storage.getOrCreateValueStorageBucket("ids");
+    uuidStorage = bucket.getValueStorage("broker");
+    uuidStorage.getValueAsync().then((id) {
+      if (id == null) {
+        id = generateToken();
+        uuidStorage.setValue(id);
+      }
+      configs[r"$uid"] = id;
+    });
   }
 
   bool _loaded = false;
@@ -415,7 +427,7 @@ class UpstreamBrokerNode extends BrokerNode {
 
     link.connect();
 
-    RemoteLinkManager linkManager = p.addUpStreamLink(link.link, name);
+    RemoteLinkManager linkManager = p.addUpstreamLink(link.link, name);
     if (linkManager == null) {
       throw new StateError("start called twice, is this possible?");
     }
