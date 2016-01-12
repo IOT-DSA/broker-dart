@@ -9,6 +9,8 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
 
   bool inTree = false;
 
+  Iterable<String> get cachedNodePaths => nodes.keys;
+  
   String disconnected = ValueUpdate.getTs();
 
   RemoteLinkManager(this.broker, this.path, NodeProviderImpl brokerProvider, [Map rootNodeData]) {
@@ -276,6 +278,9 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     }, onDone: () {
       response.close();
     });
+    response.onReqParams = (Map m){
+      // TODO
+    };
     response.onClose = (InvokeResponse rsp) {
       sub.cancel();
     };
