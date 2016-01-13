@@ -203,8 +203,17 @@ InvokeResponse publish(Map params, Responder responder,
   bool publishReqParams(Map m) {
     Object path = m['Path'];
     Object value = m['Value'];
+    Object ts = m['Timestamp'];
     if (path is String && path.startsWith('/data/')) {
       BrokerDataNode node = (parentNode.provider as BrokerNodeProvider)._getOrCreateDataNode(path);
+      if (ts is String && ts.length > 22) {
+        try {
+          DateTime.parse(ts);
+          node.updateValue(new ValueUpdate(value, ts:ts));
+        }catch(e){
+          return false;
+        }
+      }
       node.updateValue(value);
       return true;
     }
