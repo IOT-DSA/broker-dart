@@ -49,7 +49,7 @@ main(List<String> _args) async {
     args.remove("--docker");
     var config = {
       "host": "0.0.0.0",
-      "port": 8080,
+      "port": 8081,
       "link_prefix": "broker-",
       "broadcast": true,
       "downstream_name": "downstream"
@@ -98,7 +98,7 @@ main(List<String> _args) async {
   var downstreamName = getConfig("downstream_name", "downstream");
   broker = new BrokerNodeProvider(downstreamName: downstreamName);
   server = new DsHttpServer.start(getConfig("host", "0.0.0.0"),
-      httpPort: getConfig("port", -1),
+      httpPort: 8081,
       httpsPort: getConfig("https_port", -1),
       certificateName: getConfig("certificate_name"),
       nodeProvider: broker,

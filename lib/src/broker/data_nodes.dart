@@ -125,6 +125,67 @@ InvokeResponse deleteDataNode(Map params, Responder responder,
   return response..close(DSError.INVALID_PARAMETER);
 }
 
+InvokeResponse renameDataNode(Map params, Responder responder,
+  InvokeResponse response, LocalNode parentNode) {
+  Object name = params['Name'];
+  if (parentNode is BrokerDataNode &&
+    parentNode is! BrokerDataRoot &&
+    parentNode.parent != null && // make sure parent node itself is in tree
+    name is String && name != '' && !parentNode.children.containsKey(name) 
+  ) {
+    cloneNodes(parentNode, parentNode.parent, name);
+    removeDataNodeRecursive(parentNode,
+          parentNode.path.substring(parentNode.path.lastIndexOf('/') + 1));
+    DsTimer.timerOnceBefore(
+      (responder.nodeProvider as BrokerNodeProvider).saveDataNodes, 1000);
+    return response..close();
+  }
+  return response..close(DSError.INVALID_PARAMETER);
+}
+
+InvokeResponse duplicateDataNode(Map params, Responder responder,
+  InvokeResponse response, LocalNode parentNode) {
+  Object name = params['Name'];
+  if (parentNode is BrokerDataNode &&
+    parentNode is! BrokerDataRoot &&
+    parentNode.parent != null && // make sure parent node itself is in tree
+    name is String && name != '' && !parentNode.children.containsKey(name) 
+  ) {
+    cloneNodes(parentNode, parentNode.parent, name);
+    DsTimer.timerOnceBefore(
+      (responder.nodeProvider as BrokerNodeProvider).saveDataNodes, 1000);
+    return response..close();
+  }
+  return response..close(DSError.INVALID_PARAMETER);
+}
+
+BrokerDataNode cloneNodes(BrokerDataNode oldNode, BrokerDataNode newParent, String name) {
+  
+  BrokerDataNode node = newParent.provider.getOrCreateNode(
+    '${newParent.path}/$name', false);
+
+  print(node.path);
+  newParent.children[name] = node;
+  node.parent = newParent;
+  
+  oldNode.children.forEach((k,n){
+    cloneNodes(n, node, k);
+  });
+ 
+  oldNode.configs.forEach((k,v){
+    node.configs[k] = v;
+    node.updateList(k);
+  });
+  oldNode.attributes.forEach((k,v){
+    node.attributes[k] = v;
+    node.updateList(k);
+  });
+  
+  newParent.updateList(name);
+  
+  return node;
+}
+
 void removeDataNodeRecursive(BrokerDataNode node, String name) {
   for (String name in node.children.keys.toList()) {
     removeDataNodeRecursive(node.children[name], name);
@@ -165,7 +226,9 @@ Map dataNodeFunctions = {
     "dataNode": {
       "addNode": addDataNode,
       "addValue": addDataNode,
-      "deleteNode": deleteDataNode
+      "deleteNode": deleteDataNode,
+      "renameNode": renameDataNode,
+      "duplicateNode": duplicateDataNode
     },
     "dataRoot": {"addNode": addDataNode, "addValue": addDataNode, "publish":publish},
   }
