@@ -157,6 +157,12 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       node.load(m);
       profileNode.children[name] = node;
     });
+    brokerProfileMap.forEach((String name, Map m) {
+      String path = '/defs/profile/$name';
+      DefinitionNode node = getOrCreateNode(path, false);
+      node.load(m);
+      profileNode.children[name] = node;
+    });
     File connsFile = new File("defs.json");
     try {
       String data = await connsFile.readAsString();
