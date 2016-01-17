@@ -36,14 +36,22 @@ part "src/http/server.dart";
 part "src/broker/query_node.dart";
 part "src/broker/broker_profiles.dart";
 
-Future<DsHttpServer> startBrokerServer(int port, {bool persist: true}) async {
-  var broker = new BrokerNodeProvider();
+Future<DsHttpServer> startBrokerServer(int port, {
+  bool persist: true,
+  BrokerNodeProvider broker,
+  String host: "0.0.0.0"
+}) async {
+  if (broker == null) {
+    broker = new BrokerNodeProvider(
+      downstreamName: "downstream"
+    );
+  }
   broker.shouldSaveFiles = persist;
   var server = new DsHttpServer.start(
-      "0.0.0.0",
-      httpPort: port,
-      linkManager: broker,
-      nodeProvider: broker
+    host,
+    httpPort: port,
+    linkManager: broker,
+    nodeProvider: broker
   );
   await server.onServerReady;
   return server;
