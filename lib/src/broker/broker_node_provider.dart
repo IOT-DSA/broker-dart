@@ -443,9 +443,11 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (path.startsWith('/data/')) {
       return _getOrCreateDataNode(path, addToTree);
     }
-    if (addToTree) {
-      print('getOrCreateNode, addToTree = true, not supported');
-    }
+
+//    if (addToTree) {
+//      print('getOrCreateNode, addToTree = true, not supported');
+//    }
+
     LocalNode node = nodes[path];
     if (node != null) {
       return node;
