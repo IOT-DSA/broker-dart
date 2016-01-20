@@ -116,9 +116,7 @@ class BrokerTraceRequesterNode extends BrokerNode {
     if (sessionId == null) sessionId = "";
     Node node = provider.getOrCreateNode(path, false);
     if (path is String && sessionId is String && node is RemoteLinkRootNode) {
-      if (node._linkManager.responders != null &&
-        (node._linkManager.responders.containsKey(sessionId) ||
-        (sessionId.isEmpty && node._linkManager.responders.containsKey(null)))) {
+      if (node._linkManager.responders != null && node._linkManager.responders.containsKey(sessionId)) {
         if (!_listeners.containsKey(path)) {
           _listeners[path] = new _BrokerTraceResponderListener(
               path, sessionId, this, node._linkManager.responders[sessionId]);
