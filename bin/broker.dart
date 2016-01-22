@@ -98,7 +98,7 @@ main(List<String> _args) async {
   var downstreamName = getConfig("downstream_name", "downstream");
   broker = new BrokerNodeProvider(downstreamName: downstreamName);
   server = new DsHttpServer.start(getConfig("host", "0.0.0.0"),
-      httpPort: 8081,
+      httpPort: getConfig("port", 8081),
       httpsPort: getConfig("https_port", -1),
       certificateName: getConfig("certificate_name"),
       nodeProvider: broker,

@@ -220,9 +220,16 @@ class DsHttpServer {
           }
         }
 
-        link.initLink(request, m["isRequester"] == true,
-            m["isResponder"] == true, dsId, publicKey,
-            updateInterval: updateInterval, linkData:m["linkData"], formats:m["formats"]);
+        link.initLink(
+          request,
+          m["isRequester"] == true,
+          m["isResponder"] == true,
+          dsId,
+          publicKey,
+          updateInterval: updateInterval,
+          linkData: m["linkData"],
+          formats: m["formats"]
+        );
       } catch (err) {
         if (err is int) {
           // TODO: need protection because changing statusCode itself can throw
@@ -238,7 +245,8 @@ class DsHttpServer {
   void _handleWsUpdate(HttpRequest request, String dsId) {
     HttpServerLink link = _linkManager.getLinkAndConnectNode(dsId);
     if (link != null) {
-      bool trusted = link.trustedTokenHash != null && request.requestedUri.queryParameters["token"] == link.trustedTokenHash;
+      bool trusted = link.trustedTokenHash != null &&
+        request.requestedUri.queryParameters["token"] == link.trustedTokenHash;
       if (link.pendingLinkData != null) {
         _linkManager.updateLinkData(link.dsId, link.pendingLinkData);
         link.pendingLinkData = null;
