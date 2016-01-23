@@ -4,6 +4,11 @@ typedef Future<WebSocket> WebSocketUpgradeFunction(HttpRequest request);
 
 /// a server link for both http and ws
 class HttpServerLink implements ServerLink {
+  static const bool ENABLE_MSGPACK = const bool.fromEnvironment(
+    "dsa.msgpack.enabled",
+    defaultValue: true
+  );
+
   final String dsId;
   final String session;
   final String token;
@@ -112,8 +117,9 @@ class HttpServerLink implements ServerLink {
     if (requester is IRemoteRequester) {
       respJson["path"] = (requester as IRemoteRequester).responderPath;
     }
+
     if (formats != null) {
-      if (formats.contains('msgpack')) {
+      if (formats.contains('msgpack') && ENABLE_MSGPACK) {
         respJson['format'] = 'msgpack';
       } else {
         respJson['format'] = 'json';
@@ -227,6 +233,8 @@ class HttpServerLink implements ServerLink {
       enableAck: enableAck,
       useCodec: DsCodec.getCodec(format)
     );
+
+    conn.printDisconnectedMessage = false;
 
     if (logName != null) {
       conn.logName = logName;
