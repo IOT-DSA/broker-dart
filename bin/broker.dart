@@ -97,12 +97,14 @@ main(List<String> _args) async {
   updateLogLevel(getConfig("log_level", "info"));
   var downstreamName = getConfig("downstream_name", "downstream");
   broker = new BrokerNodeProvider(downstreamName: downstreamName);
-  server = new DsHttpServer.start(getConfig("host", "0.0.0.0"),
-      httpPort: getConfig("port", 8081),
-      httpsPort: getConfig("https_port", -1),
-      certificateName: getConfig("certificate_name"),
-      nodeProvider: broker,
-      linkManager: broker);
+  server = new DsHttpServer.start(
+    getConfig("host", "0.0.0.0"),
+    httpPort: getConfig("port", 8081),
+    httpsPort: getConfig("https_port", -1),
+    certificateName: getConfig("certificate_name"),
+    nodeProvider: broker,
+    linkManager: broker
+  );
 
   https = getConfig("https_port", -1) != -1;
 
@@ -112,8 +114,12 @@ main(List<String> _args) async {
   }
 
   if (args.any((it) => it.startsWith("--broker")) || args.contains("-b")) {
-    link = new LinkProvider(args, getConfig("link_prefix", "broker-"),
-        provider: broker)..connect();
+    link = new LinkProvider(
+      args,
+      getConfig("link_prefix", "broker-"),
+      provider: broker
+    );
+    link.connect();
   }
 
   if (getConfig("broadcast", false)) {
@@ -130,7 +136,8 @@ main(List<String> _args) async {
       });
     } catch (e) {
       print(
-          "Warning: Failed to start broker broadcast service. Are you running more than one broker on this machine?");
+          "Warning: Failed to start broker broadcast service."
+            "Are you running more than one broker on this machine?");
     }
   }
 

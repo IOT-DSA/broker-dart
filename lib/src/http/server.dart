@@ -206,8 +206,13 @@ class DsHttpServer {
           }
 
           link = new HttpServerLink(
-              dsId, new PublicKey.fromBytes(bytes), _linkManager, token: tokenHash,
-              nodeProvider: nodeProvider, enableTimeout: true);
+            dsId,
+            new PublicKey.fromBytes(bytes),
+            _linkManager,
+            token: tokenHash,
+            nodeProvider: nodeProvider,
+            enableTimeout: true
+          );
           if (trusted) {
             link.trustedTokenHash = tokenHash;
           } else if (!link.isDsIdValid) {

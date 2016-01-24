@@ -4,10 +4,12 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   /// map that holds all nodes
   /// a node is not in parent node's children when real data/connection doesn't exist
   /// but instance is still there
-  final Map<String, LocalNode> nodes = new Map<String, LocalNode>();
+  final Map<String, LocalNode> nodes =
+    new Map<String, LocalNode>();
 
   /// connPath to connection
-  final Map<String, RemoteLinkManager> conns = new Map<String, RemoteLinkManager>();
+  final Map<String, RemoteLinkManager> conns =
+    new Map<String, RemoteLinkManager>();
 
   BrokerPermissions permissions;
 
@@ -91,6 +93,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       permissions.root = root;
     }
   }
+
   loadAll() async {
     List<List<ISubscriptionNodeStorage>> storedData;
     if (storage != null) {
@@ -144,8 +147,6 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   }
 
   UpstreamNode upstream;
-
-  bool _defsLoaded = false;
 
   /// load a fixed profile map
   loadDef() async {
@@ -261,11 +262,13 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       }
     });
   }
+
   loadDataNodes() async {
     if (storage != null) {
-      BrokerDataNode.storageBucket = storage.getOrCreateValueStorageBucket('data');
+      BrokerDataNode.storageBucket = storage
+        .getOrCreateValueStorageBucket('data');
     }
-    logger.finest('loading data nodes');
+    logger.finest('Loading Data Nodes');
     dataNode = new BrokerDataRoot('/data', this);
     root.children['data'] = dataNode;
     nodes['/data'] = dataNode;
@@ -280,6 +283,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         node.load(m);
       });
     } catch (err) {}
+
     if (storage != null) {
        Map values = await BrokerDataNode.storageBucket.load();
        values.forEach((key, val){
@@ -297,9 +301,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     dataNode.children.forEach((String name, BrokerDataNode node) {
       m[name] = node.serialize(true);
     });
-    File connsFile = new File("data.json");
+    File dataFile = new File("data.json");
     if (shouldSaveFiles) {
-      await connsFile.writeAsString(DsJson.encode(m));
+      await dataFile.writeAsString(DsJson.encode(m));
     }
     return m;
   }
