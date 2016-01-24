@@ -2,7 +2,7 @@ part of dsbroker.broker;
 
 class BrokerDataNode extends BrokerNode {
   static IValueStorageBucket storageBucket;
-  
+
   IValueStorage storage;
   BrokerNode parent;
 
@@ -131,7 +131,7 @@ InvokeResponse renameDataNode(Map params, Responder responder,
   if (parentNode is BrokerDataNode &&
     parentNode is! BrokerDataRoot &&
     parentNode.parent != null && // make sure parent node itself is in tree
-    name is String && name != '' && !parentNode.children.containsKey(name) 
+    name is String && name != '' && !parentNode.children.containsKey(name)
   ) {
     cloneNodes(parentNode, parentNode.parent, name);
     removeDataNodeRecursive(parentNode,
@@ -149,7 +149,7 @@ InvokeResponse duplicateDataNode(Map params, Responder responder,
   if (parentNode is BrokerDataNode &&
     parentNode is! BrokerDataRoot &&
     parentNode.parent != null && // make sure parent node itself is in tree
-    name is String && name != '' && !parentNode.children.containsKey(name) 
+    name is String && name != '' && !parentNode.children.containsKey(name)
   ) {
     cloneNodes(parentNode, parentNode.parent, name);
     DsTimer.timerOnceBefore(
@@ -160,18 +160,16 @@ InvokeResponse duplicateDataNode(Map params, Responder responder,
 }
 
 BrokerDataNode cloneNodes(BrokerDataNode oldNode, BrokerDataNode newParent, String name) {
-  
   BrokerDataNode node = newParent.provider.getOrCreateNode(
     '${newParent.path}/$name', false);
 
-  print(node.path);
   newParent.children[name] = node;
   node.parent = newParent;
-  
+
   oldNode.children.forEach((k,n){
     cloneNodes(n, node, k);
   });
- 
+
   oldNode.configs.forEach((k,v){
     node.configs[k] = v;
     node.updateList(k);
@@ -180,9 +178,9 @@ BrokerDataNode cloneNodes(BrokerDataNode oldNode, BrokerDataNode newParent, Stri
     node.attributes[k] = v;
     node.updateList(k);
   });
-  
+
   newParent.updateList(name);
-  
+
   return node;
 }
 
@@ -227,7 +225,7 @@ InvokeResponse publish(Map params, Responder responder,
     }
     return false;
   }
-  
+
   if (parentNode is BrokerDataRoot && publishReqParams(params)) {
     response.onReqParams = publishReqParams;
     // leave the invoke open
