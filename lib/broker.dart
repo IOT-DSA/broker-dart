@@ -39,8 +39,12 @@ part "src/broker/broker_profiles.dart";
 Future<DsHttpServer> startBrokerServer(int port, {
   bool persist: true,
   BrokerNodeProvider broker,
-  String host: "0.0.0.0"
+  host,
+  bool loadAllData: true
 }) async {
+  if (host == null) {
+    host = InternetAddress.ANY_IP_V4;
+  }
   if (broker == null) {
     broker = new BrokerNodeProvider(
       downstreamName: "downstream"
@@ -50,9 +54,14 @@ Future<DsHttpServer> startBrokerServer(int port, {
   var server = new DsHttpServer.start(
     host,
     httpPort: port,
-    linkManager: broker,
-    nodeProvider: broker
+    nodeProvider: broker,
+    linkManager: broker
   );
+
+  if (loadAllData) {
+    await broker.loadAll();
+  }
+
   await server.onServerReady;
   return server;
 }
