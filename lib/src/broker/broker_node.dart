@@ -434,7 +434,7 @@ class UpstreamBrokerNode extends BrokerNode {
       overrideResponder: overrideResponder
     );
 
-    link.logName = "Upstream at /upstream/${ourName}";
+    link.logName = "Upstream at /upstream/${name}";
     link.connect();
 
     RemoteLinkManager linkManager = p.addUpstreamLink(link, name);
