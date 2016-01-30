@@ -5,7 +5,7 @@ import "dart:async";
 import "dart:io";
 import "dart:convert";
 
-import "package:dslink/client.dart" show LinkProvider;
+import "package:dslink/client.dart" show HttpClientLink, PrivateKey;
 import "package:dslink/responder.dart";
 import "package:dslink/requester.dart";
 import "package:dslink/common.dart";
@@ -64,4 +64,47 @@ Future<DsHttpServer> startBrokerServer(int port, {
 
   await server.onServerReady;
   return server;
+}
+
+PrivateKey loadBrokerPrivateKey({bool save: true}) {
+  File keyFile = new File(".dslink.key");
+  PrivateKey privateKey;
+  String key;
+
+  try {
+    key = keyFile.readAsStringSync();
+    privateKey = new PrivateKey.loadFromString(key);
+  } catch (err) {}
+
+  if (key == null || key.length != 131) {
+    // 43 bytes d, 87 bytes Q, 1 space
+    // generate the key
+    if (DSRandom.instance.needsEntropy) {
+      String macs;
+      if (Platform.isWindows) {
+        macs = Process.runSync("getmac", []).stdout.toString();
+      } else {
+        try {
+          macs = Process.runSync("arp", ["-an"]).stdout.toString();
+        } catch (e) {
+          try {
+            var envs = "";
+            for (var i in Platform.environment.keys) {
+              envs += "${i}=${Platform.environment[i]}\n";
+            }
+            macs = envs;
+          } catch (e) {}
+        }
+      }
+      // randomize the PRNG with the system mac (as well as timestamp)
+      DSRandom.instance.addEntropy(macs);
+    }
+    privateKey = new PrivateKey.generateSync();
+    key = privateKey.saveToString();
+    if (save == true) {
+      keyFile.writeAsStringSync(key);
+    }
+  }
+
+  return privateKey;
 }

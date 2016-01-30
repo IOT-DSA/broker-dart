@@ -147,7 +147,8 @@ class UpstreamNode extends BrokerStaticNode {
     var node = new UpstreamBrokerNode(
         "/sys/upstream/${name}", name, url, ourName, provider);
     provider.setNode("/sys/upstream/${name}", node);
-    (provider.getOrCreateNode("/sys/upstream", false) as BrokerNode).updateList(r"$is");
+    (provider.getOrCreateNode("/sys/upstream", false) as BrokerNode)
+      .updateList(name);
     node.enabled = enabled;
     node.start();
   }
@@ -170,7 +171,10 @@ class UpstreamNode extends BrokerStaticNode {
       children.remove(name);
       var rp = "/sys/upstream/${name}/";
       provider.nodes.remove(rp.substring(0, rp.length - 1));
-      List<String> toRemove = provider.nodes.keys.where((x) => x.startsWith(rp)).toList();
+      List<String> toRemove = provider.nodes
+        .keys
+        .where((x) => x.startsWith(rp))
+        .toList();
       toRemove.forEach(provider.nodes.remove);
       updateList(name);
       provider.clearUpstreamNodes();
@@ -296,7 +300,7 @@ class UpstreamUrlNode extends BrokerNode {
       var p = new Path(path).parentPath;
       UpstreamBrokerNode un = provider.getOrCreateNode(p, false);
 
-      un.provider.removeLink(un.link.link, "@upstream@${un.name}", force: true);
+      un.provider.removeLink(un.link, "@upstream@${un.name}", force: true);
       un.stop();
 
       un.url = value.toString();
@@ -317,7 +321,8 @@ class UpstreamNameNode extends BrokerNode {
 
   Response setValue(Object value, Responder responder, Response response,
       [int maxPermission = Permission.CONFIG]) {
-    if (value != null && value.toString().length > 0 && provider.getNode("/sys/upstream/$value") == null) {
+    if (value != null && value.toString().length > 0 &&
+      provider.getNode("/sys/upstream/$value") == null) {
       var p = new Path(path).parentPath;
       UpstreamBrokerNode un = provider.getOrCreateNode(p, false);
 
@@ -367,7 +372,7 @@ class UpstreamBrokerNode extends BrokerNode {
 
   bool toBeRemoved = false;
 
-  LinkProvider link;
+  HttpClientLink link;
 
   UpstreamBrokerNode(String path, this.name, this.url, this.ourName,
                      BrokerNodeProvider provider)
@@ -414,20 +419,25 @@ class UpstreamBrokerNode extends BrokerNode {
     }
 
     BrokerNodeProvider p = provider;
-    var level = logger.level;
     String upstreamId = "@upstream@$name";
     Requester overrideRequester = provider.getRequester(upstreamId);
     Responder overrideResponder = provider.getResponder(upstreamId, provider);
-    link = new LinkProvider(["--broker=${url}"], ourName + "-", enableHttp: false, nodeProvider: p, isRequester: true,
-        overrideRequester:overrideRequester, overrideResponder:overrideResponder);
+    PrivateKey pkey = loadBrokerPrivateKey();
+    link = new HttpClientLink(
+      url,
+      "${ourName}-",
+      pkey,
+      nodeProvider: p,
+      isRequester: true,
+      isResponder: true,
+      overrideRequester: overrideRequester,
+      overrideResponder: overrideResponder
+    );
 
-    link.init();
-
-    logger.level = level;
-
+    link.logName = "Upstream at /upstream/${ourName}";
     link.connect();
 
-    RemoteLinkManager linkManager = p.addUpstreamLink(link.link, name);
+    RemoteLinkManager linkManager = p.addUpstreamLink(link, name);
     if (linkManager == null) {
       throw new StateError("start called twice, is this possible?");
     }
@@ -435,8 +445,8 @@ class UpstreamBrokerNode extends BrokerNode {
     ien.updateValue(true);
     enabled = true;
     link.onRequesterReady.then((Requester requester) {
-      if (link.link.remotePath != null) {
-        linkManager.rootNode.configs[r"$remotePath"] = link.link.remotePath;
+      if (link.remotePath != null) {
+        linkManager.rootNode.configs[r"$remotePath"] = link.remotePath;
         linkManager.rootNode.updateList(r"$remotePath");
       }
     });
@@ -447,10 +457,10 @@ class UpstreamBrokerNode extends BrokerNode {
       return;
     }
 
-    link.stop();
+    link.close();
     BrokerNodeProvider p = provider;
 
-    p.removeLink(link.link, "@upstream@$name", force: true);
+    p.removeLink(link, "@upstream@$name", force: true);
     ien.updateValue(false);
     enabled = false;
   }

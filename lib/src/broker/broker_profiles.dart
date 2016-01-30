@@ -120,7 +120,8 @@ Map brokerProfileMap = {
             "name": "Managed",
             "type": "bool",
             "description":
-                "when a managed token is deleted, server will delete all the dslinks associated with the token"
+                "when a managed token is deleted, server will delete"
+                  " all the dslinks associated with the token"
           },
         ],
         r"$columns": [
