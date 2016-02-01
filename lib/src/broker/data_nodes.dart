@@ -209,9 +209,10 @@ InvokeResponse publish(Map params, Responder responder,
       }
       BrokerDataNode node = (parentNode.provider as BrokerNodeProvider)._getOrCreateDataNode(path);
       if (ts is String && ts.length > 22) {
-        if ((ts as String).length == 32) {
+        int len = (ts as String).length;
+        if (len > 29 && len < 35) {
           // fix ts with macro seconds
-          ts = '${(ts as String).substring(0,23)}${(ts as String).substring(26)}';
+          ts = '${(ts as String).substring(0,23)}${(ts as String).substring(len - 6)}';
         }
         try {
           DateTime.parse(ts);
