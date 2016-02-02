@@ -207,7 +207,7 @@ InvokeResponse publish(Map params, Responder responder,
       if (!p.isNode || !p.valid) {
         return false;
       }
-      BrokerDataNode node = (parentNode.provider as BrokerNodeProvider)._getOrCreateDataNode(path);
+      BrokerDataNode node = (parentNode.provider as BrokerNodeProvider)._getOrCreateDataNode(p.path);
       if (ts is String && ts.length > 22) {
         int len = (ts as String).length;
         if (len > 29 && len < 35) {
