@@ -10,7 +10,7 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
   bool inTree = false;
 
   Iterable<String> get cachedNodePaths => nodes.keys;
-  
+
   String disconnected = ValueUpdate.getTs();
 
   RemoteLinkManager(this.broker, this.path, NodeProviderImpl brokerProvider, [Map rootNodeData]) {
@@ -136,6 +136,44 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
   bool isNodeCached(String path) {
     return nodes.containsKey(path);
   }
+
+  @override
+  get cleanerTimeInterval => null;
+
+  void startNodeCleaner() {
+    if (_cleanerTimer != null) {
+      return;
+    }
+
+    _cleanerTimer = Scheduler.every(
+      cleanerTimeInterval == null ? Interval.FIVE_SECONDS : cleanerTimeInterval,
+      () {
+      clearDanglingNodes(isDanglingNode);
+    });
+  }
+
+  void stopNodeCleaner() {
+    if (_cleanerTimer == null) {
+      return;
+    }
+
+    _cleanerTimer.cancel();
+    _cleanerTimer = null;
+  }
+
+  Timer _cleanerTimer;
+
+  @override
+  void clearDanglingNodes([bool handler(RemoteNode node) = null]) {
+    if (handler == null) {
+      handler = isDanglingNode;
+    }
+  }
+
+  @override
+  Function get isDanglingNode => (RemoteNode node) {
+    return node.referenceCount == 0;
+  };
 }
 
 class RemoteLinkNode extends RemoteNode implements LocalNode {
