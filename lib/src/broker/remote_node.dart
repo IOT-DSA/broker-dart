@@ -20,6 +20,8 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
     if (rootNodeData != null) {
       rootNode.load(rootNodeData);
     }
+
+    startNodeCleaner();
   }
 
   Map<String, Responder> responders;
@@ -138,20 +140,17 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
   }
 
   @override
-  get cleanerTimeInterval => null;
-
   void startNodeCleaner() {
     if (_cleanerTimer != null) {
       return;
     }
 
-    _cleanerTimer = Scheduler.every(
-      cleanerTimeInterval == null ? Interval.FIVE_SECONDS : cleanerTimeInterval,
-      () {
-      clearDanglingNodes(isDanglingNode);
+    _cleanerTimer = Scheduler.every(Interval.FOUR_SECONDS, () {
+      clearDanglingNodes();
     });
   }
 
+  @override
   void stopNodeCleaner() {
     if (_cleanerTimer == null) {
       return;
@@ -164,16 +163,20 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
   Timer _cleanerTimer;
 
   @override
-  void clearDanglingNodes([bool handler(RemoteNode node) = null]) {
-    if (handler == null) {
-      handler = isDanglingNode;
+  void clearDanglingNodes([bool handler(RemoteNode node)]) {
+    List<String> toRemove = [];
+    for (String key in nodes.keys) {
+      RemoteNode node = nodes[key];
+      if (handler(node)) {
+        toRemove.add(key);
+      }
+    }
+
+    for (String key in toRemove) {
+      logger.fine("Clearing dangling remote node at ${key}");
+      clearCachedNode(key);
     }
   }
-
-  @override
-  Function get isDanglingNode => (RemoteNode node) {
-    return node.referenceCount == 0;
-  };
 }
 
 class RemoteLinkNode extends RemoteNode implements LocalNode {
