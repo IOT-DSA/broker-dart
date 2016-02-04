@@ -167,7 +167,7 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
     List<String> toRemove = [];
     for (String key in nodes.keys) {
       RemoteNode node = nodes[key];
-      if (node.referenceCount == 0) {
+      if (handler(node)) {
         toRemove.add(key);
       }
     }
