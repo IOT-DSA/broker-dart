@@ -10,7 +10,7 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
   bool inTree = false;
 
   Iterable<String> get cachedNodePaths => nodes.keys;
-  
+
   String disconnected = ValueUpdate.getTs();
 
   RemoteLinkManager(this.broker, this.path, NodeProviderImpl brokerProvider, [Map rootNodeData]) {
@@ -20,6 +20,8 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
     if (rootNodeData != null) {
       rootNode.load(rootNodeData);
     }
+
+    startNodeCleaner();
   }
 
   Map<String, Responder> responders;
@@ -35,7 +37,7 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
     } else {
       var responder = nodeProvider.createResponder(dsId, sessionId);
       responder.reqId = dsId;
-      //TODO set permission group from user node
+      // TODO: set permission group from user node
       responder.updateGroups([]);
       responders[sessionId] = responder;
       return responder;
@@ -136,6 +138,55 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
   bool isNodeCached(String path) {
     return nodes.containsKey(path);
   }
+
+  @override
+  void clearDanglingNodes([bool handler(RemoteNode node)]) {
+    List<String> toRemove = [];
+    for (String key in nodes.keys) {
+      if (key == "/") {
+        continue;
+      }
+
+      RemoteNode node = nodes[key];
+      bool drop = node.referenceCount == 0;
+
+      if (drop && node is RemoteLinkNode) {
+        drop = drop && node.callbacks.isEmpty && node.listed;
+      }
+
+      if (drop) {
+        toRemove.add(key);
+      }
+    }
+
+    for (String key in toRemove) {
+      logger.finer("Clearing dangling remote node at ${key}");
+      clearCachedNode(key);
+    }
+  }
+
+  @override
+  void startNodeCleaner() {
+    if (_cleanerTimer != null) {
+      return;
+    }
+
+    _cleanerTimer = Scheduler.every(Interval.FOUR_SECONDS, () {
+      clearDanglingNodes();
+    });
+  }
+
+  @override
+  void stopNodeCleaner() {
+    if (_cleanerTimer == null) {
+      return;
+    }
+
+    _cleanerTimer.cancel();
+    _cleanerTimer = null;
+  }
+
+  Timer _cleanerTimer;
 }
 
 class RemoteLinkNode extends RemoteNode implements LocalNode {
