@@ -151,7 +151,7 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
       bool drop = node.referenceCount == 0;
 
       if (drop && node is RemoteLinkNode) {
-        drop = drop && node.callbacks.isEmpty && node.listed;
+        drop = drop && node.callbacks.isEmpty;
       }
 
       if (drop) {
