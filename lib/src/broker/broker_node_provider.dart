@@ -793,7 +793,22 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   void removeLink(BaseLink link, String id, {bool force: false}) {
     if (_links[id] == link || force) {
+// TODO: any extra work needed in responder or requester?
+//      link.responder.destroy();
+//      link.requester.destroy();
       _links.remove(id);
+      if (link is HttpServerLink && link.session != '') {
+        // fully destroy user link
+        String connPath = makeConnPath(link.dsId);
+        if (connPath != null) {
+          RemoteLinkManager manager = conns[connPath];
+          if (manager != null) {
+            if (manager.responders.containsKey(link.session)) {
+              manager.responders.remove(link.session);
+            }
+          }
+        }
+      }
     }
   }
   void remoteLinkByPath(String path) {

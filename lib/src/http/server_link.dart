@@ -1,6 +1,7 @@
 part of dsbroker.broker;
 
 typedef Future<WebSocket> WebSocketUpgradeFunction(HttpRequest request);
+typedef void _WebSocketDisconnectCallback(HttpServerLink link);
 
 /// a server link for both http and ws
 class HttpServerLink implements ServerLink {
@@ -15,6 +16,9 @@ class HttpServerLink implements ServerLink {
   String path;
   String trustedTokenHash;
   String logName;
+  
+  _WebSocketDisconnectCallback onDisconnect;
+  
   Completer<Requester> onRequesterReadyCompleter = new Completer<Requester>();
 
   Future<Requester> get onRequesterReady => onRequesterReadyCompleter.future;
@@ -52,7 +56,7 @@ class HttpServerLink implements ServerLink {
   HttpServerLink(String id, this.publicKey, ServerLinkManager linkManager,
       {NodeProvider nodeProvider,
       this.session, this.token,
-      this.enableTimeout: false, this.enableAck: true})
+      this.enableTimeout: false, this.enableAck: true, this.onDisconnect})
       : dsId = id {
       path = linkManager.getLinkPath(id, token);
       if (path != null) {
@@ -216,6 +220,9 @@ class HttpServerLink implements ServerLink {
           request.response.writeln("Internal Server Error");
         }
       } catch (e) {}
+      if (onDisconnect != null) {
+        onDisconnect(this);
+      }
       return request.response.close();
     });
   }
@@ -233,6 +240,12 @@ class HttpServerLink implements ServerLink {
       enableAck: enableAck,
       useCodec: DsCodec.getCodec(format)
     );
+
+    if (onDisconnect != null) {
+      conn.onDisconnected.then((Object any){
+        onDisconnect(this);
+      });
+    }
 
     conn.printDisconnectedMessage = false;
 
