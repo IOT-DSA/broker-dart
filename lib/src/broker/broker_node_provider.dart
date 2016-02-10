@@ -391,6 +391,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         if (_links.containsKey(fullId)) {
           _links.remove(fullId);
         }
+
+        conns.remove(manager.path);
+        manager.clear();
         upstreamDataNode.updateList(name);
       }
     }
