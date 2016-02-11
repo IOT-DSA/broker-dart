@@ -304,7 +304,13 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
   Response removeAttribute(
       String name, Responder responder, Response response) {
     // TODO check permission on RemoteLinkRootNode
-    _linkManager.requester.remove(remotePath).then((update) {
+    String remoteFullPath;
+    if (remotePath == '/') {
+      remoteFullPath = '/$name';
+    } else {
+      remoteFullPath = '$remotePath/$name';
+    }
+    _linkManager.requester.remove(remoteFullPath).then((update) {
       response.close();
     }).catchError((err) {
       if (err is DSError) {
@@ -319,7 +325,13 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
 
   Response removeConfig(String name, Responder responder, Response response) {
     // TODO check permission on RemoteLinkRootNode
-    _linkManager.requester.remove(remotePath).then((update) {
+    String remoteFullPath;
+    if (remotePath == '/') {
+      remoteFullPath = '/$name';
+    } else {
+      remoteFullPath = '$remotePath/$name';
+    }
+    _linkManager.requester.remove(remoteFullPath).then((update) {
       response.close();
     }).catchError((err) {
       if (err is DSError) {
@@ -338,8 +350,14 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
       overrideAttributeChanged(name, value);
       return response..close();
     }
+    String remoteFullPath;
+    if (remotePath == '/') {
+      remoteFullPath = '/$name';
+    } else {
+      remoteFullPath = '$remotePath/$name';
+    }
     // TODO check permission on RemoteLinkRootNode
-    _linkManager.requester.set('$remotePath/$name', value).then((update) {
+    _linkManager.requester.set(remoteFullPath, value).then((update) {
       response.close();
     }).catchError((err) {
       if (err is DSError) {
@@ -355,7 +373,13 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
   Response setConfig(
       String name, Object value, Responder responder, Response response) {
     // TODO check permission on RemoteLinkRootNode
-    _linkManager.requester.set('$remotePath/$name', value).then((update) {
+    String remoteFullPath;
+    if (remotePath == '/') {
+      remoteFullPath = '/$name';
+    } else {
+      remoteFullPath = '$remotePath/$name';
+    }
+    _linkManager.requester.set(remoteFullPath, value).then((update) {
       response.close();
     }).catchError((err) {
       if (err is DSError) {
