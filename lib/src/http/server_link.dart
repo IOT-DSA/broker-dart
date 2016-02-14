@@ -176,7 +176,6 @@ class HttpServerLink implements ServerLink {
     }
   }
 
-
   WebSocketConnection wsconnection;
 
   void handleWsUpdate(HttpRequest request, bool trusted, [WebSocketUpgradeFunction upgrade]) {
@@ -194,7 +193,10 @@ class HttpServerLink implements ServerLink {
     updateResponseBeforeWrite(request, null, null, true);
 
     upgrade(request).then((WebSocket websocket) {
-      wsconnection = createWsConnection(websocket, request.uri.queryParameters['format']);
+      wsconnection = createWsConnection(
+        websocket,
+        request.uri.queryParameters['format']
+      );
       wsconnection.addConnCommand('salt', salts[0]);
       if (connection != null) {
         connection.close();
@@ -231,6 +233,7 @@ class HttpServerLink implements ServerLink {
     if (wsconnection != null) {
       wsconnection.close();
       wsconnection = null;
+      connection = null;
     }
   }
 
@@ -243,7 +246,7 @@ class HttpServerLink implements ServerLink {
     );
 
     if (onDisconnect != null) {
-      conn.onDisconnected.then((Object any){
+      conn.onDisconnected.then((Object any) {
         onDisconnect(this);
       });
     }

@@ -810,6 +810,10 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
             if (link.wsconnection != null) {
               link.wsconnection = null;
             }
+
+            if (link.connection != null) {
+              link.connection = null;
+            }
           }
         }
       }
