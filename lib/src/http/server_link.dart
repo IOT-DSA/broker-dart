@@ -16,9 +16,9 @@ class HttpServerLink implements ServerLink {
   String path;
   String trustedTokenHash;
   String logName;
-  
+
   _WebSocketDisconnectCallback onDisconnect;
-  
+
   Completer<Requester> onRequesterReadyCompleter = new Completer<Requester>();
 
   Future<Requester> get onRequesterReady => onRequesterReadyCompleter.future;
@@ -230,6 +230,7 @@ class HttpServerLink implements ServerLink {
   void close() {
     if (wsconnection != null) {
       wsconnection.close();
+      wsconnection = null;
     }
   }
 

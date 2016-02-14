@@ -793,9 +793,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   void removeLink(BaseLink link, String id, {bool force: false}) {
     if (_links[id] == link || force) {
-// TODO: any extra work needed in responder or requester?
-//      link.responder.destroy();
-//      link.requester.destroy();
+      // TODO: any extra work needed in responder or requester?
+      // link.responder.destroy();
+      // link.requester.destroy();
       _links.remove(id);
       if (link is HttpServerLink && link.session != '') {
         // fully destroy user link
@@ -805,6 +805,10 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
           if (manager != null) {
             if (manager.responders.containsKey(link.session)) {
               manager.responders.remove(link.session);
+            }
+
+            if (link.wsconnection != null) {
+              link.wsconnection = null;
             }
           }
         }
