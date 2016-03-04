@@ -138,14 +138,24 @@ class UpstreamNode extends BrokerStaticNode {
     });
   }
 
-  void addUpstreamConnection(String name, String url, String ourName,
-                             [bool enabled = true]) {
+  void addUpstreamConnection(
+    String name,
+    String url,
+    String ourName,
+    String token,
+    [bool enabled = true]) {
     if (enabled == null) {
       enabled = true;
     }
 
     var node = new UpstreamBrokerNode(
-        "/sys/upstream/${name}", name, url, ourName, provider);
+      "/sys/upstream/${name}",
+      name,
+      url,
+      ourName,
+      token,
+      provider
+    );
     provider.setNode("/sys/upstream/${name}", node);
     (provider.getOrCreateNode("/sys/upstream", false) as BrokerNode)
       .updateList(name);
@@ -159,7 +169,7 @@ class UpstreamNode extends BrokerStaticNode {
     if (node is UpstreamBrokerNode) {
       bool enabled = node.enabled;
       removeUpstreamConnection(name);
-      addUpstreamConnection(newName, node.url, node.ourName, enabled);
+      addUpstreamConnection(newName, node.url, node.ourName, node.token, enabled);
     }
   }
 
@@ -184,7 +194,7 @@ class UpstreamNode extends BrokerStaticNode {
   void loadConfigMap(Map x) {
     for (var k in x.keys) {
       var m = x[k];
-      addUpstreamConnection(k, m["url"], m["name"], m["enabled"]);
+      addUpstreamConnection(k, m["url"], m["name"], m["token"], m["enabled"]);
     }
   }
 
@@ -209,7 +219,12 @@ class UpstreamNode extends BrokerStaticNode {
     var map = {};
 
     ubns.forEach((x) {
-      map[x.name] = {"name": x.ourName, "url": x.url, "enabled": x.enabled};
+      map[x.name] = {
+        "name": x.ourName,
+        "url": x.url,
+        "enabled": x.enabled,
+        "token": x.token
+      };
     });
 
     return map;
@@ -245,9 +260,14 @@ class CreateUpstreamBrokerNode extends BrokerNode {
       {
         "name": "brokerName",
         "type": "string",
-        "description":
-        "The name of the link when connected to the Upstream Broker",
+        "description":"The name of the link when connected to the Upstream Broker",
         "placeholder": "ThisBroker"
+      },
+      {
+        "name": "token",
+        "type": "string",
+        "description": "Broker Token (if needed)",
+        "placeholder": "OptionalAuthToken"
       }
     ];
 
@@ -261,8 +281,9 @@ class CreateUpstreamBrokerNode extends BrokerNode {
     var name = params["name"];
     var ourName = params["brokerName"];
     var url = params["url"];
+    var token = params["token"];
     var b = provider.getOrCreateNode("/sys/upstream", false) as UpstreamNode;
-    b.addUpstreamConnection(name, url, ourName);
+    b.addUpstreamConnection(name, url, token, ourName);
     provider.upstream.update();
     return response..close();
   }
@@ -336,6 +357,31 @@ class UpstreamNameNode extends BrokerNode {
   }
 }
 
+class UpstreamTokenNode extends BrokerNode {
+  UpstreamTokenNode(String path, BrokerNodeProvider provider)
+    : super(path, provider);
+
+  Response setValue(Object value, Responder responder, Response response,
+    [int maxPermission = Permission.CONFIG]) {
+    if (value != null && value.toString().length > 0) {
+      var p = new Path(path).parentPath;
+      UpstreamBrokerNode un = provider.getOrCreateNode(p, false);
+
+      un.provider.removeLink(un.link, "@upstream@${un.name}", force: true);
+      un.stop();
+
+      un.token = value.toString();
+      un.enabled = true;
+      un.start();
+
+      provider.upstream.update();
+      return super.setValue(value, responder, response, maxPermission);
+    }
+
+    return response..close();
+  }
+}
+
 class UpstreamEnabledNode extends BrokerNode {
   UpstreamEnabledNode(String path, BrokerNodeProvider provider)
   : super(path, provider);
@@ -362,11 +408,14 @@ class UpstreamEnabledNode extends BrokerNode {
 class UpstreamBrokerNode extends BrokerNode {
   String name;
   String url;
+  String token;
+
   final String ourName;
 
   UpstreamEnabledNode ien;
   UpstreamUrlNode un;
   UpstreamNameNode nn;
+  UpstreamTokenNode tn;
   BrokerNode bnn;
   bool enabled = false;
 
@@ -375,7 +424,7 @@ class UpstreamBrokerNode extends BrokerNode {
   HttpClientLink link;
 
   UpstreamBrokerNode(String path, this.name, this.url, this.ourName,
-                     BrokerNodeProvider provider)
+                     this.token, BrokerNodeProvider provider)
   : super(path, provider) {
     ien = new UpstreamEnabledNode("/sys/upstream/${name}/enabled", provider);
     ien.configs[r"$type"] = "bool";
@@ -396,6 +445,11 @@ class UpstreamBrokerNode extends BrokerNode {
     bnn.configs[r"$type"] = "string";
     bnn.updateValue(ourName);
 
+    tn = new UpstreamTokenNode("/sys/upstream/${name}/token", provider);
+    tn.configs[r"$type"] = "string";
+    tn.configs[r"$writable"] = "write";
+    tn.updateValue(token);
+
     new Future(() {
       var drn = new DeleteUpstreamConnectionNode(
           "/sys/upstream/${name}/delete", name, provider);
@@ -404,12 +458,14 @@ class UpstreamBrokerNode extends BrokerNode {
       provider.setNode(un.path, un);
       provider.setNode(nn.path, nn);
       provider.setNode(bnn.path, bnn);
+      provider.setNode(tn.path, tn);
 
       addChild("delete", drn);
       addChild("enabled", ien);
       addChild("url", un);
       addChild("name", nn);
       addChild("brokerName", bnn);
+      addChild("token", tn);
     });
   }
 
@@ -431,7 +487,10 @@ class UpstreamBrokerNode extends BrokerNode {
       isRequester: true,
       isResponder: true,
       overrideRequester: overrideRequester,
-      overrideResponder: overrideResponder
+      overrideResponder: overrideResponder,
+      token: (
+        token != null && token.isNotEmpty
+      ) ? token : null
     );
 
     link.logName = "Upstream at /upstream/${name}";
