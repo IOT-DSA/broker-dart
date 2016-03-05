@@ -21,6 +21,8 @@ class BrokerDataNode extends BrokerNode {
     if (parent == null) {
       // add this node to tree and create all parent levels
       provider.getOrCreateNode(path, true);
+      DsTimer.timerOnceBefore(
+        (responder.nodeProvider as BrokerNodeProvider).saveDataNodes, 1000);
     }
     if (storage != null &&
       (lastValueUpdate == null || lastValueUpdate.value != value)) {
