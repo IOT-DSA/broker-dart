@@ -55,7 +55,8 @@ Future<DsHttpServer> startBrokerServer(int port, {
     host,
     httpPort: port,
     nodeProvider: broker,
-    linkManager: broker
+    linkManager: broker,
+    shouldSaveFiles: persist
   );
 
   if (loadAllData) {

@@ -13,6 +13,8 @@ class HttpServerLink implements ServerLink {
   final String dsId;
   final String session;
   final String token;
+  final PublicKey publicKey;
+
   String path;
   String trustedTokenHash;
   String logName;
@@ -25,7 +27,6 @@ class HttpServerLink implements ServerLink {
 
   Requester requester;
   Responder responder;
-  final PublicKey publicKey;
 
   /// nonce for authentication, don't overwrite existing nonce
   ECDH tempNonce;
@@ -102,7 +103,6 @@ class HttpServerLink implements ServerLink {
     isResponder = clientRequester;
     pendingLinkData = linkData;
 
-    // TODO(rinick): don't use a hardcoded id and public key
     Map respJson = {
       "id": serverDsId,
       "publicKey": serverKey,
@@ -111,6 +111,7 @@ class HttpServerLink implements ServerLink {
       "updateInterval": updateInterval,
       "version": DSA_VERSION
     };
+
     if (!trusted) {
       tempNonce = await ECDH.assign(publicKey, verifiedNonce);
       respJson["tempKey"] = tempNonce.encodedPublicKey;
@@ -118,6 +119,7 @@ class HttpServerLink implements ServerLink {
       respJson["saltS"] = salts[1];
       respJson["saltL"] = salts[2];
     }
+
     if (requester is IRemoteRequester) {
       respJson["path"] = (requester as IRemoteRequester).responderPath;
     }

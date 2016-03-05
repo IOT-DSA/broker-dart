@@ -36,12 +36,14 @@ class DsSimpleLinkManager implements ServerLinkManager {
 }
 
 class DsHttpServer {
-  String dsId = "broker-dsa-VLK07CSRoX_bBTQm4uDIcgfU-jV-KENsp52KvDG_o8g";
-  String publicKey =
-      "vvOSmyXM084PKnlBz3SeKScDoFs6I_pdGAdPAB8tOKmA5IUfIlHefdNh1jmVfi1YBTsoYeXm2IH-hUZang48jr3DnjjI3MkDSPo1czrI438Cr7LKrca8a77JMTrAlHaOS2Yd9zuzphOdYGqOFQwc5iMNiFsPdBtENTlx15n4NGDQ6e3d8mrKiSROxYB9LrF1-53goDKvmHYnDA_fbqawokM5oA3sWUIq5uNdp55_cF68Lfo9q-ea8JEsHWyDH73FqNjUaPLFdgMl8aYl-sUGpdlMMMDwRq-hnwG3ad_CX5iFkiHpW-uWucta9i3bljXgyvJ7dtVqEUQBH-GaUGkC-w";
-  int updateInterval = 200;
   final NodeProvider nodeProvider;
   final ServerLinkManager _linkManager;
+
+  String serverDsId;
+  String serverPublicKey;
+  PrivateKey privateKey;
+
+  int updateInterval = 200;
 
   /// to open a secure server, SecureSocket.initialize() need to be called before start()
   DsHttpServer.start(dynamic address, //
@@ -50,11 +52,21 @@ class DsHttpServer {
       String certificateName,
       sslContext: false,
       linkManager,
+      bool shouldSaveFiles: true,
+      this.privateKey,
       this.nodeProvider})
       : _linkManager =
             (linkManager == null) ? new DsSimpleLinkManager() : linkManager {
     var completer = new Completer();
     onServerReady = completer.future;
+
+    if (privateKey == null) {
+      privateKey = loadBrokerPrivateKey(save: shouldSaveFiles);
+    }
+
+    serverPublicKey = privateKey.publicKey.qBase64;
+    serverDsId = privateKey.publicKey.getDsId("broker-dsa");
+
     if (httpPort > 0) {
       HttpServer.bind(address, httpPort).then((server) {
         logger.info("Listening on HTTP port $httpPort");
@@ -213,6 +225,7 @@ class DsHttpServer {
             nodeProvider: nodeProvider,
             enableTimeout: true
           );
+
           if (trusted) {
             link.trustedTokenHash = tokenHash;
           } else if (!link.isDsIdValid) {
@@ -229,11 +242,12 @@ class DsHttpServer {
           request,
           m["isRequester"] == true,
           m["isResponder"] == true,
-          dsId,
-          publicKey,
+          serverDsId,
+          serverPublicKey,
           updateInterval: updateInterval,
           linkData: m["linkData"],
-          formats: m["formats"]
+          formats: m["formats"],
+          trusted: trusted
         );
       } catch (err) {
         if (err is int) {
