@@ -23,19 +23,11 @@ class BrokerNode extends LocalNodeImpl with BrokerNodePermission{
     return rslt;
   }
 
-  @override
-  int getPermission(Iterator<String> paths, Responder responder, int permission) {
-    permission = super.getPermission(paths, responder, permission);
-    if (permission == Permission.CONFIG) {
-      return Permission.CONFIG;
+  BrokerNodePermission getPermissionChild(String str) {
+    if (children[str] is BrokerNodePermission) {
+      return children[str] as BrokerNodePermission;
     }
-    if (paths.moveNext()) {
-      String name = paths.current;
-      if (children[name] is BrokerNodePermission) {
-        return (children[name] as BrokerNodePermission).getPermission(paths, responder, permission);
-      }
-    }
-    return permission;
+    return null;
   }
 }
 

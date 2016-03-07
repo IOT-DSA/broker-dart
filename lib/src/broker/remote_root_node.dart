@@ -93,20 +93,11 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
   /// children list only for permissions
   Map<String, VirtualNodePermission> pchildren = new Map<String, VirtualNodePermission>();
 
-  @override
-  int getPermission(Iterator<String> paths, Responder responder, int permission) {
-    permission = super.getPermission(paths, responder, permission);
-    if (permission == Permission.CONFIG) {
-      return Permission.CONFIG;
-    }
-    if (paths.moveNext()) {
-      String name = paths.current;
-      if (pchildren[name] is BrokerNodePermission) {
-        return pchildren[name].getPermission(paths, responder, permission);
-      }
-    }
-    return permission;
+  BrokerNodePermission getPermissionChild(String str) {
+    return pchildren[str];
   }
+
+
   @override
   Map getSimpleMap() {
     Map m = super.getSimpleMap();

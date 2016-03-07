@@ -3,60 +3,53 @@ part of dsbroker.broker;
 class PermissionPair {
   String group;
   int permission;
-
-  PermissionPair(this.group, this.permission);
+  bool isDefault;
+  PermissionPair(this.group, this.permission) {
+    isDefault = (group == 'default');
+  }
 }
 
 
-class BrokerNodePermission {
+abstract class BrokerNodePermission {
   List<PermissionPair> permissionList;
-  Map<String, int> idPermissions;
-  int defaultPermission = Permission.NEVER;
 
-  int getPermission(Iterator<String> paths, Responder responder,
-      int permission) {
-    // find permission for id;
-    if (idPermissions != null && idPermissions.containsKey(responder.reqId)) {
-      return idPermissions[responder.reqId];
-    }
+  BrokerNodePermission getPermissionChild(String str);
+  
+  void getPermission(Iterator<String> paths, List<String> groups, List<int> output) {
     // find permission for group
     if (permissionList != null) {
-      if (responder.groups.length == 1) {
-        // optimize for single group
-        String group = responder.groups[0];
-        for (var pair in permissionList) {
-          if (pair.group == group) {
-            return pair.permission;
-          }
-        }
-      } else if (responder.groups.length > 1) {
-        var groups = responder.groups;
-        for (var pair in permissionList) {
-          if (groups.contains(pair.group)) {
-            return pair.permission;
+      int len = groups.length;
+      for (int i = 0; i < len; ++i) {
+        String group = groups[i];
+        for (PermissionPair p in permissionList) {
+          if (p.isDefault || p.group == group) {
+            int permission = p.permission;
+            output[i] = permission;
+            if (permission == Permission.CONFIG) {
+              // children won't overwrite a config permission
+              return;
+            }
+            break;
           }
         }
       }
     }
-    if (defaultPermission != Permission.NEVER) {
-      return defaultPermission;
+    if (paths.moveNext()) {
+      BrokerNodePermission child = getPermissionChild(paths.current);
+      if (child != null) {
+        child.getPermission(paths, groups, output);
+      }
     }
-    return permission;
   }
 
   void loadPermission(List l) {
     if (l != null && l.length > 0) {
-      defaultPermission = Permission.NEVER;
       if (permissionList == null) {
         permissionList = new List<PermissionPair>();
       } else {
         permissionList.clear;
       }
-      if (idPermissions == null) {
-        idPermissions = new Map<String, int>();
-      } else {
-        idPermissions.clear;
-      }
+
       for (var pair in l) {
         if (pair is List && pair.length == 2 && pair[0] is String &&
             pair[1] is String) {
@@ -67,32 +60,19 @@ class BrokerNodePermission {
             // invalid permission
             continue;
           }
-          if (key == 'default') {
-            defaultPermission = pint;
-          } else if (key.length < 43 || key.contains(':')) {
-            // group permission
-            permissionList.add(new PermissionPair(key, pint));
-          } else {
-            // id
-            idPermissions[key] = pint;
-          }
+          permissionList.add(new PermissionPair(key, pint));
         }
       }
       if (permissionList.isEmpty) {
         permissionList = null;
       }
-      if (idPermissions.isEmpty) {
-        idPermissions = null;
-      }
     } else {
       permissionList = null;
-      idPermissions = null;
     }
   }
 
   List serializePermission() {
-    if (defaultPermission == Permission.NEVER && idPermissions == null &&
-        permissionList == null) {
+    if (permissionList == null) {
       return null;
     }
     List rslt = [];
@@ -100,14 +80,6 @@ class BrokerNodePermission {
       for (var pair in permissionList) {
         rslt.add([pair.group, Permission.names[pair.permission]]);
       }
-    }
-    if (idPermissions != null) {
-      idPermissions.forEach((String id, int p) {
-        rslt.add([id, Permission.names[p]]);
-      });
-    }
-    if (defaultPermission == Permission.NEVER) {
-      rslt.add(['default', Permission.names[defaultPermission]]);
     }
     return rslt;
   }
@@ -118,20 +90,8 @@ class VirtualNodePermission extends BrokerNodePermission {
   Map<String, VirtualNodePermission> children = new Map<
       String,
       VirtualNodePermission>();
-
-  int getPermission(Iterator<String> paths, Responder responder,
-      int permission) {
-    permission = super.getPermission(paths, responder, permission);
-    if (permission == Permission.CONFIG) {
-      return Permission.CONFIG;
-    }
-    if (paths.moveNext()) {
-      String name = paths.current;
-      if (children.containsKey(name)) {
-        return children[name].getPermission(paths, responder, permission);
-      }
-    }
-    return permission;
+  BrokerNodePermission getPermissionChild(String str) {
+    return children[str];
   }
 
   void load(Map m) {
@@ -161,16 +121,25 @@ class VirtualNodePermission extends BrokerNodePermission {
 }
 
 class BrokerPermissions implements IPermissionManager {
-  BrokerNodePermission root;
+  RootNode root;
 
   BrokerPermissions() {
   }
 
   int getPermission(String path, Responder resp) {
     if (root != null) {
-      return root.getPermission(path
-          .split('/')
-          .iterator, resp, Permission.NONE);
+      List<int> output = new List<int>.filled(resp.groups.length, Permission.NONE);
+      var iterator  = path.split('/').iterator;
+      // remove first ""
+      iterator.moveNext();
+      root.getPermission(iterator, resp.groups, output);
+      int rslt = Permission.NONE;
+      for (int p in output) {
+        if (p > rslt) {
+          rslt = p;
+        }
+      }
+      return rslt;
     }
     return Permission.CONFIG;
   }
