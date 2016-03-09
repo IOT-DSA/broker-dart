@@ -10,10 +10,10 @@ class BrokerResponder extends Responder {
       LocalNode parentNode = nodeProvider.getOrCreateNode(path.parentPath, false);
       LocalNode actionNode;
       bool doublePermissionCheck = false;
-      if (path.name == 'getHistory' && parentNode.overideAttributes['@@getHistory'] is Map) {
+      if (path.name == 'getHistory' && parentNode.getOverideAttributes('@@getHistory') is Map) {
         // alias node for getHistory action
         // TODO, should we make this a generic way of alias node
-        Map m  = parentNode.overideAttributes['@@getHistory'];
+        Map m  = parentNode.getOverideAttributes('@@getHistory');
         if (m['val'] is List && (m['val'] as List).length > 0) {
           String path = m['val'][0];
           actionNode = nodeProvider.getOrCreateNode(path, false);

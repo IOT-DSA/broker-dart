@@ -449,7 +449,12 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
   IValueStorage _attributeStorage;
   Map _overrideAttributes;
   Map _downstreamAttributes;
-  Map<String, Object> get overideAttributes => _overrideAttributes;
+  Object getOverideAttributes(String attr) {
+    if(_overrideAttributes != null) {
+      return _overrideAttributes[attr];
+    }
+    return null;
+  }
   /// override attribute change from the broker
   void overrideAttributeChanged(String name, Map value) {
     if (_attributeStorage == null && storageBucket != null) {
