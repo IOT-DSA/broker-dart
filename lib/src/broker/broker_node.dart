@@ -275,7 +275,7 @@ class CreateUpstreamBrokerNode extends BrokerNode {
     var url = params["url"];
     var token = params["token"];
     var b = provider.getOrCreateNode("/sys/upstream", false) as UpstreamNode;
-    b.addUpstreamConnection(name, url, token, ourName);
+    b.addUpstreamConnection(name, url, ourName, token);
     provider.upstream.update();
     return response..close();
   }
