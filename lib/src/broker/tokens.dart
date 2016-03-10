@@ -82,6 +82,8 @@ class TokenGroupNode extends BrokerStaticNode {
         provider.getOrCreateNode('/defs/profile/broker/tokenGroup', false);
   }
 
+  void init() {}
+
   bool _loaded = false;
 
   void load(Map m) {
@@ -111,21 +113,21 @@ class TokenNode extends BrokerNode {
   int ts0 = -1;
   int ts1 = -1;
   int count = -1;
-  
+
   /// destroy token with a timer;
   Timer timer;
-  
+
   // when true, kill all dslink when token is removed
   bool managed = false;
-  
+
   List links;
-  
+
   TokenGroupNode parent;
   String id;
   String token;
-  
- 
-  
+
+
+
   TokenNode(String path, BrokerNodeProvider provider, this.parent, this.id)
       : super(path, provider) {
     configs[r'$is'] = 'broker/token';
@@ -161,7 +163,7 @@ class TokenNode extends BrokerNode {
         if (ts1 > -1) {
           int now = new DateTime.now().millisecondsSinceEpoch;
           if (now  < ts1) {
-            timer= new Timer(new Duration(milliseconds:ts1 - now), delete); 
+            timer= new Timer(new Duration(milliseconds:ts1 - now), delete);
           } else {
             DsTimer.callLater(delete);
           }
@@ -177,11 +179,11 @@ class TokenNode extends BrokerNode {
         links = configs[r'$$links'];
       }
     }
-    
+
     if (configs[r'$$token'] is String) {
       token = configs[r'$$token'];
     }
- 
+
     // TODO: implement target position
     // TODO: when target position is gone, token should be removed
   }
@@ -215,7 +217,7 @@ class TokenNode extends BrokerNode {
     }
     return false;
   }
-  
+
   void delete() {
     deleteLinks();
     parent.children.remove(id);
@@ -224,7 +226,7 @@ class TokenNode extends BrokerNode {
     provider.clearNode(this);
     DsTimer.timerOnceBefore(provider.saveTokensNodes, 1000);
   }
-  
+
   void deleteLinks(){
     if (links != null) {
       for (Object path in links) {

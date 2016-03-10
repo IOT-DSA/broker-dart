@@ -171,7 +171,7 @@ class RemoteLinkRootListController extends ListController {
             reseted = true;
             node.resetNodeCache();
             changes.add(name);
-          } else if (name.startsWith(r'$link_')){
+          } else if (name.startsWith(r'$link_')) {
             node.configs[name] = value;
             changes.add(name);
           }

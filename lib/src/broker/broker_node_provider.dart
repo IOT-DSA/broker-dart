@@ -253,7 +253,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     RemoteLinkNode.storageBucket = storageBucket;
     logger.finest('loading proxy attributes');
     Map values = await storageBucket.load();
-    values.forEach((key, val){
+    values.forEach((key, val) {
       LocalNode node = this.getOrCreateNode(key, false);
       if (node is RemoteLinkNode && node._linkManager.inTree) {
         node.updateOverrideAttributes(val);
@@ -286,7 +286,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
     if (storage != null) {
        Map values = await BrokerDataNode.storageBucket.load();
-       values.forEach((key, val){
+       values.forEach((key, val) {
          if (nodes[key] is BrokerDataNode) {
            nodes[key].updateValue(val);
          } else {
@@ -321,6 +321,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     } catch (err) {
       String path = '/sys/tokens/root';
       TokenGroupNode tokens = new TokenGroupNode(path, this, 'root');
+      tokens.init();
     }
   }
 
@@ -559,7 +560,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     return node;
   }
 
-  bool clearNode(BrokerNode node){
+  bool clearNode(BrokerNode node) {
     // TODO, keep it in memory if there are pending subscription
     // and remove it when subscription ends
     if (nodes[node.path] == node) {
@@ -843,7 +844,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   }
 
   void updateLinkData(String dsId, Map m) {
-    if (_id2connPath.containsKey(dsId)){
+    if (_id2connPath.containsKey(dsId)) {
       var node = getOrCreateNode(_id2connPath[dsId], false);
       node.configs[r'$linkData'] = m;
     }
