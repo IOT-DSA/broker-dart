@@ -40,6 +40,16 @@ class BrokerDataNode extends BrokerNode {
       }
     });
   }
+  Response setAttribute(String name, Object value, Responder responder,
+        Response response) {
+    if (!attributes.containsKey(name) || attributes[name] != value) {
+      attributes[name] = value;
+      updateList(name);
+      DsTimer.timerOnceBefore(
+        (responder.nodeProvider as BrokerNodeProvider).saveDataNodes, 1000);
+    }
+    return response..close();
+  }
 }
 
 class BrokerDataRoot extends BrokerDataNode {
