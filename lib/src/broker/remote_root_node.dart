@@ -96,7 +96,41 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
   BrokerNodePermission getPermissionChild(String str) {
     return pchildren[str];
   }
-
+  
+  BrokerNodePermission getPermissionChildWithPath(String path, bool create) {
+    if (path == '/') {
+      return this;
+    }
+    List paths = path.split('/');
+    return getPermissionChildWithPaths(this, paths, 1, create);
+  }
+  static BrokerNodePermission getPermissionChildWithPaths(BrokerNodePermission p, List paths, int pos, bool create) {
+    if (pos >= paths.length) {
+      return p;
+    }
+    String name = paths[pos];
+    BrokerNodePermission pnext;
+    if (name == '') {
+      pnext = p;
+    } else {
+      pnext = p.getPermissionChild(name);
+      if (pnext == null) {
+        if (create) {
+          pnext = new VirtualNodePermission();
+          if (p is RemoteLinkRootNode) {
+            p.pchildren[name] = pnext;
+          } else if (p is VirtualNodePermission) {
+            p.children[name] = pnext;
+          } else {
+            return null;
+          }
+        } else {
+          return null;
+        }
+      }
+    }
+    return getPermissionChildWithPaths(pnext, paths, pos+1, create);
+  }
 
   @override
   Map getSimpleMap() {
@@ -105,6 +139,11 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
       m[r'$linkData'] = configs[r'$linkData'];
     }
     return m;
+  }
+  
+  bool persist() {
+    DsTimer.timerOnceAfter(provider.saveConns, 3000);
+    return true;
   }
 }
 

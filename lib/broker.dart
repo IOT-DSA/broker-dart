@@ -33,6 +33,7 @@ part "src/broker/responder.dart";
 part "src/http/server_link.dart";
 part "src/http/server.dart";
 
+part "src/broker/permission_actions.dart";
 part "src/broker/query_node.dart";
 part "src/broker/broker_profiles.dart";
 

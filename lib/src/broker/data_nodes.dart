@@ -45,10 +45,14 @@ class BrokerDataNode extends BrokerNode {
     if (!attributes.containsKey(name) || attributes[name] != value) {
       attributes[name] = value;
       updateList(name);
-      DsTimer.timerOnceBefore(
-        (responder.nodeProvider as BrokerNodeProvider).saveDataNodes, 1000);
+      persist();
     }
     return response..close();
+  }
+  bool persist() {
+    DsTimer.timerOnceBefore(
+           provider.saveDataNodes, 1000);
+    return true;
   }
 }
 

@@ -47,7 +47,7 @@ abstract class BrokerNodePermission {
       if (permissionList == null) {
         permissionList = new List<PermissionPair>();
       } else {
-        permissionList.clear;
+        permissionList.clear();
       }
 
       for (var pair in l) {

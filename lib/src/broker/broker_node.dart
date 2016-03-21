@@ -29,6 +29,9 @@ class BrokerNode extends LocalNodeImpl with BrokerNodePermission{
     }
     return null;
   }
+  bool persist() {
+    return false;
+  }
 }
 
 /// nodes that automatic add itself to broker tree and always stay there
@@ -63,7 +66,7 @@ class ClearConnsAction extends BrokerStaticNode {
 
   ClearConnsAction(String path, BrokerNodeProvider provider) : super(path, provider) {
     configs[r"$name"] = "Clear Conns";
-    configs[r"$invokable"] = "read";
+    configs[r"$invokable"] = "config";
   }
 
   @override
@@ -262,7 +265,6 @@ class CreateUpstreamBrokerNode extends BrokerNode {
         "placeholder": "OptionalAuthToken"
       }
     ];
-
     configs[r"$result"] = "values";
   }
 

@@ -138,6 +138,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     new BrokerVersionNode("/sys/version", this, DSA_VERSION);
     new StartTimeNode("/sys/startTime", this);
     new ClearConnsAction("/sys/clearConns", this);
+    new UpdatePermissionAction("/sys/updatePermissions", this);
 
     ThroughPutController.initNodes(this);
 
