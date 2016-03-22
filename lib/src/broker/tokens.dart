@@ -125,7 +125,7 @@ class TokenNode extends BrokerNode {
   TokenGroupNode parent;
   String id;
   String token;
-
+  String group;
 
 
   TokenNode(String path, BrokerNodeProvider provider, this.parent, this.id)
@@ -184,6 +184,11 @@ class TokenNode extends BrokerNode {
       token = configs[r'$$token'];
     }
 
+    
+    if (configs[r'$$group'] is String) {
+      group = configs[r'$$group'];
+    }
+    
     // TODO: implement target position
     // TODO: when target position is gone, token should be removed
   }
@@ -265,6 +270,8 @@ InvokeResponse addTokenNode(Map params, Responder responder,
     node.configs[r'$$timeRange'] = params['TimeRange'];
     node.configs[r'$$count'] = params['Count'];
     node.configs[r'$$managed'] = params['Managed'];
+    // TODO check group
+    node.configs[r'$$group'] = params['Group'];
     node.configs[r'$$token'] = token;
     node.init();
     TokenGroupNode.tokens[tokenId] = node;

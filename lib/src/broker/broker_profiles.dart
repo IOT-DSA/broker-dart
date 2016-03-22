@@ -123,6 +123,7 @@ Map brokerProfileMap = {
                 "when a managed token is deleted, server will delete"
                   " all the dslinks associated with the token"
           },
+          {"name": "Group", "type": "string", "description": "default permission group"},
         ],
         r"$columns": [
           {"name": "tokenName", "type": "string"}

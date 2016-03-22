@@ -685,6 +685,10 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
           Node node = getOrCreateNode(connPath, false);
           node.configs[r'$$token'] = tokenNode.id;
         }
+        if (tokenNode.group is String) {
+          Node node = getOrCreateNode(connPath, false);
+          node.configs[r'$$group'] = tokenNode.group;
+        }
         DsTimer.timerOnceBefore(saveConns, 3000);
         return connPath;
       }
@@ -870,6 +874,10 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (connPath == null) return null;
     RemoteLinkNode node = getOrCreateNode(connPath, false);
     Responder rslt = node._linkManager.getResponder(nodeProvider, dsId, sessionId);
+    if (node.configs[r'$$group'] is String) {
+      List groups = (node.configs[r'$$group'] as String).split(',');
+      rslt.updateGroups(groups);
+    }
     if (storage != null && sessionId == '' && rslt.storage == null) {
       rslt.storage = storage.getOrCreateSubscriptionStorage(connPath);
     }
