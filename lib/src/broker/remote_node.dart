@@ -265,6 +265,9 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
   InvokeResponse invoke(
       Map params, Responder responder, InvokeResponse response, LocalNode parentNode, [int maxPermission = Permission.CONFIG]) {
     // TODO, when invoke closed without any data, also need to updateStream to close
+    if (_linkManager.disconnected != null) {
+      return response..close(DSError.DISCONNECTED);
+    }
     StreamSubscription sub = _linkManager.requester
     .invoke(remotePath, params)
     .listen((RequesterInvokeUpdate update) {
