@@ -184,11 +184,11 @@ class TokenNode extends BrokerNode {
       token = configs[r'$$token'];
     }
 
-    
+
     if (configs[r'$$group'] is String) {
       group = configs[r'$$group'];
     }
-    
+
     // TODO: implement target position
     // TODO: when target position is gone, token should be removed
   }
@@ -262,6 +262,11 @@ InvokeResponse deleteTokenNode(Map params, Responder responder,
 
 InvokeResponse addTokenNode(Map params, Responder responder,
     InvokeResponse response, LocalNode parentNode) {
+
+  if (params == null) {
+    params = {};
+  }
+
   if (parentNode is TokenGroupNode) {
     String token = TokenGroupNode.makeToken();
     String tokenId = token.substring(0, 16);
