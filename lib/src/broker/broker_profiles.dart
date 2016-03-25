@@ -99,7 +99,8 @@ Map brokerProfileMap = {
         r"$params": [
           {"name": "Path", "type": "string"},
           {"name": "Value", "type": "dynamic"},
-          {"name": "Timestamp", "type": "string"}
+          {"name": "Timestamp", "type": "string"},
+          {"name": "CloseStream", "type": "bool"}
         ]
       }
     },

@@ -280,7 +280,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     }, onDone: () {
       response.close();
     });
-    response.onReqParams = (Map m){
+    response.onReqParams = (InvokeResponse resp, Map m){
       // TODO
     };
     response.onClose = (InvokeResponse rsp) {

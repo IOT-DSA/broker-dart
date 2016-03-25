@@ -214,10 +214,14 @@ void removeDataNodeRecursive(BrokerDataNode node, String name) {
 InvokeResponse publish(Map params, Responder responder,
   InvokeResponse response, LocalNode parentNode) {
   // return true when params are valid
-  bool publishReqParams(Map m) {
+  bool publishReqParams(InvokeResponse invokeResponse, Map m) {
     Object path = m['Path'];
     Object value = m['Value'];
     Object ts = m['Timestamp'];
+    Object closeStream = m['CloseStream'];
+    if (closeStream == true) {
+      response..close();
+    }
     if (path is String && path.startsWith('/data/')) {
       Path p = new Path(path);
       if (!p.isNode || !p.valid) {
@@ -243,7 +247,7 @@ InvokeResponse publish(Map params, Responder responder,
     return false;
   }
 
-  if (parentNode is BrokerDataRoot && publishReqParams(params)) {
+  if (parentNode is BrokerDataRoot && publishReqParams(response, params)) {
     response.onReqParams = publishReqParams;
     // leave the invoke open
     return response;
