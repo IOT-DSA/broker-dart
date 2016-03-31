@@ -195,6 +195,13 @@ BrokerDataNode cloneNodes(BrokerDataNode oldNode, BrokerDataNode newParent, Stri
     node.updateList(k);
   });
 
+  Object oldValue = oldNode.value;
+  if (oldValue != null) {
+    node.updateValue(oldValue);
+    if (node is BrokerDataNode && node.storage != null) {
+      node.storage.setValue(oldValue);
+    }
+  }
   newParent.updateList(name);
 
   return node;
