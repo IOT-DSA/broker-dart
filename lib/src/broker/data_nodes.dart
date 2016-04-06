@@ -127,6 +127,10 @@ InvokeResponse deleteDataNode(Map params, Responder responder,
         String name = parentNode.path.substring(
           parentNode.path.lastIndexOf('/') + 1);
         parentNode.parent = null;
+        parentNode.attributes.clear();
+        if (parentNode.storage != null) {
+          parentNode.storage.destroy();
+        }
         parent.children.remove(name);
         parent.updateList(name);
         parentNode.clearValue();
@@ -210,6 +214,10 @@ BrokerDataNode cloneNodes(BrokerDataNode oldNode, BrokerDataNode newParent, Stri
 void removeDataNodeRecursive(BrokerDataNode node, String name) {
   for (String name in node.children.keys.toList()) {
     removeDataNodeRecursive(node.children[name], name);
+  }
+  node.attributes.clear();
+  if (node.storage != null) {
+    node.storage.destroy();
   }
   BrokerDataNode parent = node.parent;
   node.parent = null;
