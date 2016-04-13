@@ -216,7 +216,8 @@ class RemoteLinkRootListController extends ListController {
           }
           // ignore other changes
         } else if (name.startsWith('@')) {
-          // ignore
+          node.attributes[name] = value;
+          changes.add(name);
         } else {
           changes.add(name);
           if (removed) {
