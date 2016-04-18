@@ -12,6 +12,9 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
 
   bool get loaded => true;
 
+  bool get isBroker {
+    return configs[r'$is'] == 'dsa/broker';
+  }
   // TODO does this need parentNode?
   LocalNode parentNode;
 

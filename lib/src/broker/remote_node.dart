@@ -305,6 +305,12 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
 
   Response removeAttribute(
       String name, Responder responder, Response response) {
+    
+    if (!_linkManager.rootNode.isBroker ) {
+      overrideAttributeChanged(name, value, true);
+      return response..close();
+    }
+    
     // TODO check permission on RemoteLinkRootNode
     String remoteFullPath;
     if (remotePath == '/') {
@@ -348,8 +354,8 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
 
   Response setAttribute(
       String name, Object value, Responder responder, Response response) {
-    if (value is Map && value['@'] != null) {
-      overrideAttributeChanged(name, value);
+    if (!_linkManager.rootNode.isBroker || (value is Map && value['@'] != null)) {
+      overrideAttributeChanged(name, value, false);
       return response..close();
     }
     String remoteFullPath;
@@ -449,170 +455,71 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
 
 
   IValueStorage _attributeStorage;
-  Map _overrideAttributes;
-  Map _downstreamAttributes;
+  Map overrideAttributes= {};
+  Map downstreamAttributes = {};
   Object getOverideAttributes(String attr) {
-    if(_overrideAttributes != null) {
-      return _overrideAttributes[attr];
-    }
-    return null;
+    return overrideAttributes[attr];
   }
   /// override attribute change from the broker
-  void overrideAttributeChanged(String name, Map value) {
+  void overrideAttributeChanged(String name, Object value, bool clear) {
+    if (!clear && value is Map && value['@'] == 'clear') {
+      clear = true;
+    }
     if (_attributeStorage == null && storageBucket != null) {
       _attributeStorage = storageBucket.getValueStorage(path);
     }
-    bool changed = false;
-    Object method = value['@'];
-    if  (method == 'overwrite' || method == 'merge' ) {
-      changed = true;
-      if (_overrideAttributes == null) {
-        _overrideAttributes = {};
-        _downstreamAttributes = {};
-      }
-      if (!_overrideAttributes.containsKey(name)) {
-        _overrideAttributes[name] = value;
-        if (attributes[name] != null) {
-          _downstreamAttributes = attributes[name];
-        }
-      } else if (method == 'merge') {
-        Map m = _overrideAttributes[name];
-        if (m['@'] == 'merge' && m['type'] == value['type']) {
-          if (m['val'] is List && value['val'] is List) {
-            // merge 2 list
-            List l = value['val'].toList();
-            for (Object obj in m['val']) {
-              if (!l.contains(obj)) {
-                l.add(obj);
-              }
-            }
-            m['val'] = l;
-          } else if (m['val'] is Map && value['val'] is Map) {
-            // merge 2 map
-            (value['val'] as Map).forEach((k,v){
-              m['val'][k] = v;
-            });
-          } else {
-            _overrideAttributes[name] = value;
-          }
+    if (clear) {
+      if (overrideAttributes.containsKey(name)) {
+        overrideAttributes.remove(name);
+        if (overrideAttributes.containsKey(name)) {
+          attributes[name] = overrideAttributes[name];
         } else {
-          _overrideAttributes[name] = value;
+          attributes.remove(name);
         }
-      } else {
-        // overwrite
-        _overrideAttributes[name] = value;
-      }
-      if (_attributeStorage != null) {
-        _attributeStorage.setValue(_overrideAttributes);
-      }
-      mergeOverrideAttribute(name);
-    } else if (method == 'remove') {
-      if (_overrideAttributes != null && _overrideAttributes.containsKey(name)) {
-        Map m = _overrideAttributes[name];
-        if (m['type'] == value['type'] ) {
-          if (m['val'] is List && value['val'] is List) {
-            for (Object obj in value['val']) {
-              if (m['val'].contains(obj)) {
-                m['val'].remove(obj);
-                changed = true;
-              }
-            }
-          } else if (m['val'] is Map && value['keys'] is List) {
-            for (String key in value['keys']) {
-              (value['val'] as Map).remove(key);
-              changed = true;
-            }
-          }
-        }
-      }
-    } else if (method == 'clear') {
-      if (_overrideAttributes != null && _overrideAttributes.containsKey(name)) {
-        _overrideAttributes.remove(name);
         if (_attributeStorage != null) {
-          if (_overrideAttributes.isEmpty) {
+          if (overrideAttributes.isEmpty) {
             _attributeStorage.destroy();
           } else {
-            _attributeStorage.setValue(_overrideAttributes);
+            _attributeStorage.setValue(overrideAttributes);
           }
         }
-
-        if (_downstreamAttributes.containsKey(name)) {
-          attributes[name] = _downstreamAttributes[name];
-        }
-        changed = true;
+        listChangeController.add(name);
       }
-    }
-    if (changed) {
+    } else if (value != overrideAttributes[name]) {
+      overrideAttributes[name] = value;
+      attributes[name] = value;
+      if (_attributeStorage != null) {
+         _attributeStorage.setValue(overrideAttributes);
+      }
       listChangeController.add(name);
     }
   }
   /// attribute change update from downstream
-  bool downstreamAttributeChanged(String name, Object value) {
-    if (_overrideAttributes != null && _overrideAttributes.containsKey(name)) {
-      _downstreamAttributes[name] = value;
-      if (_overrideAttributes[name]['@'] == 'overwrite') {
-        return false;
+  bool downstreamAttributeChanged(String name, Object value, bool clear) {
+    if (clear) {
+      if (downstreamAttributes.containsKey(name)) {
+        downstreamAttributes.remove(name);
+        if (!overrideAttributes.containsKey(name)) {
+           attributes.remove(name);
+           return true;
+        } 
       }
-      mergeOverrideAttribute(name);
-      return true;
-    } else {
-      if (value == null) {
-        attributes.remove(name);
-      } else {
+    } else if (downstreamAttributes[name] != value) {
+      downstreamAttributes[name] == value;
+      if (!overrideAttributes.containsKey(name)) {
         attributes[name] = value;
-      }
-      return true;
-    }
-  }
-  /// merge the attribute from downstream
-  void mergeOverrideAttribute(name) {
-    if (_overrideAttributes.containsKey(name)) {
-      if (_downstreamAttributes.containsKey(name)) {
-        Map m = _overrideAttributes[name];
-        if (m['@'] == 'merge') {
-          Map rsltMap = {'@':'merge' ,'type':m['type']};
-          Object valo = m['val'];
-          Object vald = _downstreamAttributes[name];
-          if (vald is Map && vald['@'] != null) {
-            vald = (vald as Map)['val'];
-          }
-          if (valo is List && vald is List) {
-            List rslt = valo.toList();
-            if (m['type'] == 'paths') {
-              rslt.addAll(vald.map((str)=>'${_linkManager.path}$str'));
-            } else {
-              rslt.addAll(vald);
-            }
-            rsltMap['val'] = rslt;
-          } else if (valo is Map && vald is Map) {
-            Map rslt = {};
-            vald.forEach((k,v) {
-              rslt[k] = v;
-            });
-            valo.forEach((k,v) {
-              rslt[k] = v;
-            });
-            rsltMap['val'] = rslt;
-          }
-          attributes[name] = rsltMap;
-        } else/* if (m['@'] == 'overwrite') */{
-          attributes[name] = _overrideAttributes[name];
-        }
-      } else {
-        attributes[name] = _overrideAttributes[name];
-      }
-    } else {
-      if (_downstreamAttributes.containsKey(name)) {
-        attributes[name] = _downstreamAttributes[name];
-      } else {
-        return;
+        return true;
       }
     }
+    return false;
   }
+ 
   /// initialization of override attributes
   void updateOverrideAttributes(Map m) {
-    _overrideAttributes = m;
-    _downstreamAttributes = {};
+    overrideAttributes = m;
+    m.forEach((key,val) {
+      attributes[key] = val;
+    });
   }
 
   /// reset node cache when remote list api require a reset of the node data
@@ -620,12 +527,11 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
   void resetNodeCache(){
     configs.clear();
     attributes.clear();
+    downstreamAttributes.clear();
     children.clear();
-    if (_overrideAttributes != null) {
-      _overrideAttributes.forEach((k,v) {
-        attributes[k] = v;
-      });
-    }
+    overrideAttributes.forEach((k,v) {
+      attributes[k] = v;
+    });
   }
 }
 
@@ -687,11 +593,11 @@ class RemoteLinkListController extends ListController {
           }
         } else if (name.startsWith('@')) {
           if (removed) {
-            if ((node as RemoteLinkNode).downstreamAttributeChanged(name, null) ) {
+            if ((node as RemoteLinkNode).downstreamAttributeChanged(name, null, true) ) {
               changes.add(name);
             }
           } else {
-            if ((node as RemoteLinkNode).downstreamAttributeChanged(name, value) ) {
+            if ((node as RemoteLinkNode).downstreamAttributeChanged(name, value, false) ) {
               changes.add(name);
             }
           }
