@@ -365,7 +365,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         manager.inTree = false;
         // remove server link if it's not connected
         if (_links.containsKey(fullId)) {
-          _links.remove(fullId);
+          _links.remove(fullId).close();
         }
         connsNode.updateList(name);
       }
@@ -603,6 +603,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       _id2connPath[fullId] = connPath;
       return connPath;
     }
+
     if (fullId.length < 43) {
       // user link
       String connPath = '$downstreamNameSS$fullId';
@@ -636,6 +637,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
           // remove the last - in the name;
           connPath = connPath.substring(0, connPath.length - 1);
         }
+
         if (!_connPath2id.containsKey(connPath)) {
           _connPath2id[connPath] = fullId;
           _id2connPath[fullId] = connPath;
@@ -654,6 +656,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (_id2connPath.containsKey(fullId)) {
       return _id2connPath[fullId];
     }
+
     if (token != null && token != '') {
       TokenNode tokenNode = TokenGroupNode.findTokenNode(token, fullId);
       if (tokenNode != null) {
@@ -756,8 +759,13 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         connPath = makeConnPath(str);
 
         if (connPath != null) {
-          getOrCreateNode(connPath, false)
+          LocalNode localNode = getOrCreateNode(connPath, false)
             ..configs[r'$$dsId'] = str;
+
+          if (localNode is RemoteLinkRootNode) {
+            localNode._linkManager.disconnected = null;
+          }
+
           logger.info('Link connected at ${connPath}');
         } else {
           return false;
@@ -825,6 +833,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       }
     }
   }
+
   void remoteLinkByPath(String path) {
     Node node = nodes[path];
     if (node is RemoteLinkRootNode) {
