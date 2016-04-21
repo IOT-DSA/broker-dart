@@ -6,7 +6,7 @@ class UserNode extends BrokerNode {
     configs[r'$is'] = 'broker/userNode';
     profile = provider.getOrCreateNode('/defs/profile/broker/userNode', false);
   }
-
+  BrokerNode parent;
   bool _loaded = false;
   /// Load this node from the provided map as [m].
   void load(Map m) {
@@ -29,6 +29,10 @@ class UserNode extends BrokerNode {
       } else if (value is Map) {
         String childPath = '$childPathPre$key';
         LocalNode node = provider.getOrCreateNode(childPath, false);
+        if (node is UserNode) {
+          node.parent = this;
+        }
+        
         children[key] = node;
         if (node is UserNode) {
           node.load(value);
@@ -69,6 +73,7 @@ InvokeResponse addUserChildNode(Map params, Responder responder,
         ..close(new DSError('invalidParameter', msg: 'node already exist'));
     }
     UserNode node = responder.nodeProvider.getOrCreateNode('${parentNode.path}/$name', false);
+    node.parent = parentNode;
     parentNode.children[name] = node;
     parentNode.updateList(name);
     DsTimer.timerOnceBefore((responder.nodeProvider as BrokerNodeProvider).saveUsrNodes, 1000);
@@ -118,9 +123,52 @@ InvokeResponse addUserLink(Map params, Responder responder, InvokeResponse respo
   return response..close(DSError.INVALID_PARAMETER);
 }
 
+InvokeResponse removeUserNode(Map params, Responder responder, InvokeResponse response,
+    LocalNode parentNode) {
+  Object recursive = params['Recursive'];
+  if (parentNode is UserNode &&
+    parentNode is! UserRootNode &&
+    parentNode.parent != null // make sure parent node itself is in tree
+  ) {
+    if (recursive == true) {
+      removeUserNodeRecursive(parentNode,
+        parentNode.path.substring(parentNode.path.lastIndexOf('/') + 1));
+    } else {
+      if (parentNode.children.isEmpty) {
+        UserNode parent = parentNode.parent;
+        String name = parentNode.path.substring(
+          parentNode.path.lastIndexOf('/') + 1);
+        parentNode.parent = null;
+        parentNode.attributes.clear();
+        parent.children.remove(name);
+        parent.updateList(name);
+        parentNode.clearValue();
+      } else {
+        return response..close(DSError.INVALID_PARAMETER);
+      }
+    }
+    DsTimer.timerOnceBefore(
+      (responder.nodeProvider as BrokerNodeProvider).saveUsrNodes, 1000);
+    return response..close();
+  }
+  return response..close(DSError.INVALID_PARAMETER);
+}
+
+void removeUserNodeRecursive(UserNode node, String name) {
+  for (String name in node.children.keys.toList()) {
+    removeUserNodeRecursive(node.children[name], name);
+  }
+  node.attributes.clear();
+  UserNode parent = node.parent;
+  node.parent = null;
+  parent.children.remove(name);
+  parent.updateList(name);
+  node.clearValue();
+}
+
 Map userNodeFunctions = {
   "broker": {
-    "userNode": {"addChild": addUserChildNode, "addLink": addUserLink},
+    "userNode": {"addChild": addUserChildNode, "addLink": addUserLink, "removeNode": removeUserNode},
     "userRoot": {"addChild": addUserChildNode, "addLink": addUserLink,}
   }
 };

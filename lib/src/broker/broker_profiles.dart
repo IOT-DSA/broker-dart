@@ -9,14 +9,18 @@ Map brokerProfileMap = {
           {"name": "Name", "type": "string"}
         ]
       },
-      "addLink": {
-        r"$invokable": "config",
+//      "addLink": {
+//        r"$invokable": "config",
+//        r"$params": [
+//          {"name": "Name", "type": "string"},
+//          {"name": "Id", "type": "string"}
+//        ]
+//      },
+      "removeNode": {r"$invokable": "config",
         r"$params": [
-          {"name": "Name", "type": "string"},
-          {"name": "Id", "type": "string"}
+         {"name": "Recursive", "type": "bool"}
         ]
-      },
-      "remove": {r"$invokable": "config"}
+      }
     },
     "userRoot": {
       "addChild": {
