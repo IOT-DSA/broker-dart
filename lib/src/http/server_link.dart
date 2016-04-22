@@ -1,8 +1,8 @@
 part of dsbroker.broker;
 
-typedef Future<WebSocket> WebSocketUpgradeFunction(HttpRequest request, [
-  protocolSelector(List<String> protocols),
-  bool useStandardWebSocket
+typedef Future<WebSocket> WebSocketUpgradeFunction(HttpRequest request,
+  bool useStandardWebSocket, [
+  protocolSelector(List<String> protocols)
 ]);
 typedef void _WebSocketDisconnectCallback(HttpServerLink link);
 
@@ -191,7 +191,8 @@ class HttpServerLink implements ServerLink {
 
   void handleWsUpdate(HttpRequest request, bool trusted, [WebSocketUpgradeFunction upgrade]) {
     if (upgrade == null) {
-      upgrade = HttpHelper.upgradeToWebSocket;
+      upgrade = (request, useCompression, [selector]) =>
+        HttpHelper.upgradeToWebSocket(request, useCompression, selector);
     }
 
     if (!trusted && !verifySalt(0, request.uri.queryParameters['auth'])) {
@@ -203,7 +204,7 @@ class HttpServerLink implements ServerLink {
     }
     updateResponseBeforeWrite(request, null, null, true);
 
-    upgrade(request, (m) => null, enableStandardWebSocket).then((WebSocket websocket) {
+    upgrade(request, enableStandardWebSocket, (m) => null).then((WebSocket websocket) {
       wsconnection = createWsConnection(
         websocket,
         request.uri.queryParameters['format']
