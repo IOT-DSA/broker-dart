@@ -22,24 +22,6 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
     return new RemoteLinkRootListController(this, requester);
   }
 
-  Response setAttribute(
-      String name, Object value, Responder responder, Response response) {
-    if (!attributes.containsKey(name) || attributes[name] != value) {
-      attributes[name] = value;
-      updateList(name);
-    }
-    return response..close();
-  }
-
-  Response removeAttribute(
-      String name, Responder responder, Response response) {
-    if (attributes.containsKey(name)) {
-      attributes.remove(name);
-      updateList(name);
-    }
-    return response..close();
-  }
-
   Response setConfig(
       String name, Object value, Responder responder, Response response) {
     var config = Configs.getConfig(name, profile);
