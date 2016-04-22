@@ -10,7 +10,7 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
   bool inTree = false;
 
   Iterable<String> get cachedNodePaths => nodes.keys;
-  
+
   String disconnected = ValueUpdate.getTs();
 
   RemoteLinkManager(this.broker, this.path, NodeProviderImpl brokerProvider, [Map rootNodeData]) {
@@ -305,12 +305,12 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
 
   Response removeAttribute(
       String name, Responder responder, Response response) {
-    
+
     if (!_linkManager.rootNode.isBroker ) {
       overrideAttributeChanged(name, value, true);
       return response..close();
     }
-    
+
     // TODO check permission on RemoteLinkRootNode
     String remoteFullPath;
     if (remotePath == '/') {
@@ -502,7 +502,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
         if (!overrideAttributes.containsKey(name)) {
            attributes.remove(name);
            return true;
-        } 
+        }
       }
     } else if (downstreamAttributes[name] != value) {
       downstreamAttributes[name] == value;
@@ -513,7 +513,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     }
     return false;
   }
- 
+
   /// initialization of override attributes
   void updateOverrideAttributes(Map m) {
     overrideAttributes = m;
@@ -532,6 +532,11 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     overrideAttributes.forEach((k,v) {
       attributes[k] = v;
     });
+  }
+
+  @override
+  void overrideListChangeController(BroadcastStreamController<String> controller) {
+    _listChangeController = controller;
   }
 }
 

@@ -198,7 +198,7 @@ class DsHttpServer {
         }
         String str = const Utf8Decoder().convert(merged);
         Map m = DsJson.decode(str);
-        
+
         // validate the input structure
         if (m["linkData"] != null && m["linkData"] is! Map) {
           throw HttpStatus.BAD_REQUEST;

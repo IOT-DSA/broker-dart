@@ -1,7 +1,7 @@
 part of dsbroker.broker;
 
 /// Wrapper node for brokers
-class BrokerNode extends LocalNodeImpl with BrokerNodePermission{
+class BrokerNode extends LocalNodeImpl with BrokerNodePermission {
   final BrokerNodeProvider provider;
   BrokerNode(String path, this.provider) : super(path);
 
@@ -29,6 +29,7 @@ class BrokerNode extends LocalNodeImpl with BrokerNodePermission{
     }
     return null;
   }
+
   bool persist() {
     return false;
   }
