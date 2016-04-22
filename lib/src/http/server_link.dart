@@ -1,6 +1,9 @@
 part of dsbroker.broker;
 
-typedef Future<WebSocket> WebSocketUpgradeFunction(HttpRequest request);
+typedef Future<WebSocket> WebSocketUpgradeFunction(HttpRequest request, [
+  protocolSelector(List<String> protocols),
+  bool useStandardWebSocket
+]);
 typedef void _WebSocketDisconnectCallback(HttpServerLink link);
 
 /// a server link for both http and ws
@@ -85,6 +88,7 @@ class HttpServerLink implements ServerLink {
   }
 
   bool isRequester = false;
+  bool enableStandardWebSocket;
 
   /// by default it's a responder only link
   bool isResponder = true;
@@ -98,7 +102,8 @@ class HttpServerLink implements ServerLink {
       int updateInterval: 200,
       Map linkData,
       List formats,
-      bool trusted: false}) async {
+      bool trusted: false,
+      bool enableCompression: false}) async {
     isRequester = clientResponder;
     isResponder = clientRequester;
     pendingLinkData = linkData;
@@ -132,6 +137,10 @@ class HttpServerLink implements ServerLink {
       }
     } else {
       respJson['format'] = 'json';
+    }
+
+    if (enableCompression == true) {
+      enableStandardWebSocket = true;
     }
 
     {
@@ -194,7 +203,7 @@ class HttpServerLink implements ServerLink {
     }
     updateResponseBeforeWrite(request, null, null, true);
 
-    upgrade(request).then((WebSocket websocket) {
+    upgrade(request, (m) => null, enableStandardWebSocket).then((WebSocket websocket) {
       wsconnection = createWsConnection(
         websocket,
         request.uri.queryParameters['format']

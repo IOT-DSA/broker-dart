@@ -270,8 +270,6 @@ InvokeResponse publish(Map params, Responder responder,
   return response..close(DSError.INVALID_PARAMETER);
 }
 
-
-
 Map dataNodeFunctions = {
   "broker": {
     "dataNode": {
