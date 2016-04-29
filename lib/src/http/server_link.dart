@@ -209,6 +209,7 @@ class HttpServerLink implements ServerLink {
         websocket,
         request.uri.queryParameters['format']
       );
+
       wsconnection.addConnCommand('salt', salts[0]);
       if (connection != null) {
         connection.close();
@@ -257,9 +258,14 @@ class HttpServerLink implements ServerLink {
       useCodec: DsCodec.getCodec(format)
     );
 
+    websocket.done.then((_) {
+      close();
+    });
+
     if (onDisconnect != null) {
-      conn.onDisconnected.then((Object any) {
+      conn.onDisconnected.then((_) {
         onDisconnect(this);
+        close();
       });
     }
 
