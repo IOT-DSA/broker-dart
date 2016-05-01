@@ -1,5 +1,7 @@
 {
   "phabricator.uri" : "https://p.dev.dglogik.com",
-  "repository.callsign": "DDB"
+  "repository.callsign": "DDB",
+  "load": [
+    ".arc/libdglogik"
+  ]
 }
-

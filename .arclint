@@ -1,7 +1,6 @@
 {
   "exclude": [
-    "(packages/)",
-    "(lib/script.dart)"
+    "(packages/)"
   ],
   "linters": {
     "chmod": {
@@ -11,9 +10,7 @@
       "type": "spelling"
     },
     "dart": {
-      "type": "script-and-regex",
-      "script-and-regex.script": "bash tool/arc/lint.sh",
-      "script-and-regex.regex": "/^(?P<severity>.+) !!(?P<file>.+)!! !!(?P<name>.+)!! (?P<line>.+):(?P<char>[0-9]+) !!(?P<message>.+)!!$/m",
+      "type": "dart",
       "include": [
         "(\\.dart$)"
       ]
