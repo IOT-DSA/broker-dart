@@ -493,7 +493,8 @@ class UpstreamBrokerNode extends BrokerNode {
 
     RemoteLinkManager linkManager = p.addUpstreamLink(link, name);
     if (linkManager == null) {
-      throw new StateError("start called twice, is this possible?");
+      p.removeLink(link, "@upstream@$name", force: true);
+      linkManager = p.addUpstreamLink(link, name);
     }
 
     ien.updateValue(true);
