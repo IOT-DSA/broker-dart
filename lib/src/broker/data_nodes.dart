@@ -62,6 +62,7 @@ class BrokerDataRoot extends BrokerDataNode {
   BrokerDataRoot(String path, BrokerNodeProvider provider)
     : super(path, provider) {
     configs[r'$is'] = 'broker/dataRoot';
+    configs.remove(r'$writable');
     profile = provider.getOrCreateNode('/defs/profile/broker/dataRoot', false);
     // avoid parent checking
     parent = this;
