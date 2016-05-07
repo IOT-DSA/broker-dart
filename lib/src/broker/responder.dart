@@ -43,9 +43,13 @@ class BrokerResponder extends Responder {
       }
 
       if (actionNode.getInvokePermission() <= permission) {
-        actionNode.invoke(m['params'], this,
-            addResponse(new InvokeResponse(this, rid, parentNode, actionNode, path.name)), parentNode,
-            permission);
+        actionNode.invoke(
+          m['params'],
+          this,
+          addResponse(new InvokeResponse(this, rid, parentNode, actionNode, path.name)),
+          parentNode,
+          permission
+        );
       } else {
         closeResponse(m['rid'], error: DSError.PERMISSION_DENIED);
       }

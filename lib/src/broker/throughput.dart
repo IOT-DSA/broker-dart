@@ -83,7 +83,7 @@ class ThroughPutNode extends BrokerStaticNode {
   bool throughputNeeded = false;
 
   @override
-  RespSubscribeListener subscribe(callback(ValueUpdate), [int qos = 0]) {
+  RespSubscribeListener subscribe(callback(ValueUpdate update), [int qos = 0]) {
     if (!throughputNeeded) {
       throughputNeeded = true;
       provider.throughput.throughputNeeded = true;
