@@ -30,6 +30,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   BrokerNode quarantineNode;
   BrokerNode tokens;
 
+  BrokerStatsNode stats;
+
   Map rootStructure = {
     'users': {},
     'defs': {},
@@ -159,10 +161,12 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     new UpdatePermissionAction("/sys/updatePermissions", this);
 
     throughput.initNodes(this);
-
     upstream = new UpstreamNode("/sys/upstream", this);
-
     traceNode.init();
+
+    stats = new BrokerStatsNode("/sys/stats", this);
+
+    stats.init();
   }
 
   /// load a fixed profile map
