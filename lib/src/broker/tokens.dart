@@ -2,14 +2,13 @@ part of dsbroker.broker;
 
 class TokenGroupNode extends BrokerStaticNode {
   // a token map used by both global tokens, and user tokens
-  static Map<String, TokenNode> tokens = new Map<String, TokenNode>();
+  Map<String, TokenNode> tokens = new Map<String, TokenNode>();
+  Map<String, TokenNode> _trustedTokens = {};
 
-  static Map<String, TokenNode> _trustedTokens = {};
+  Map<String, TokenNode> get trustedTokens => _trustedTokens;
 
-  static Map<String, TokenNode> get trustedTokens => _trustedTokens;
-
-  static TokenNode createTrustedToken(String name,
-      BrokerNodeProvider provider) {
+  TokenNode createTrustedToken(
+      String name, BrokerNodeProvider provider) {
     if (_trustedTokens.containsKey(name)) {
       return _trustedTokens[name];
     }
@@ -19,12 +18,12 @@ class TokenGroupNode extends BrokerStaticNode {
     TokenNode node = new TokenNode(null, provider, null, tokenId);
     node.configs[r'$$token'] = token;
     node.init();
-    TokenGroupNode.tokens[tokenId] = node;
+    tokens[tokenId] = node;
     _trustedTokens[name] = node;
     return node;
   }
 
-  static String makeToken() {
+  String makeToken() {
     List<int> tokenCodes = new List<int>(48);
     int i = 0;
     while (i < 48) {
@@ -44,7 +43,7 @@ class TokenGroupNode extends BrokerStaticNode {
     return rslt;
   }
 
-  static TokenNode findTokenNode(String token, String dsId) {
+  TokenNode findTokenNode(String token, String dsId) {
     if (token.length < 16) {
       return null;
     }
@@ -64,9 +63,8 @@ class TokenGroupNode extends BrokerStaticNode {
       }
     }
 
-
-    String hashStr = CryptoProvider.sha256(
-        const Utf8Encoder().convert('$dsId${tokenNode.token}'));
+    String hashStr = CryptoProvider
+        .sha256(const Utf8Encoder().convert('$dsId${tokenNode.token}'));
     if (hashStr == tokenHash) {
       return tokenNode;
     }
@@ -100,7 +98,7 @@ class TokenGroupNode extends BrokerStaticNode {
         attributes[key] = value;
       } else if (value is Map) {
         TokenNode node = new TokenNode('$path/$key', provider, this, key);
-        TokenGroupNode.tokens[key] = node;
+        tokens[key] = node;
         node.load(value);
         children[key] = node;
       }
@@ -127,7 +125,6 @@ class TokenNode extends BrokerNode {
   String token;
   String group;
 
-
   TokenNode(String path, BrokerNodeProvider provider, this.parent, this.id)
       : super(path, provider) {
     configs[r'$is'] = 'broker/token';
@@ -150,20 +147,16 @@ class TokenNode extends BrokerNode {
       List dates = s.split('/');
       if (dates.length == 2) {
         try {
-          ts0 = DateTime
-              .parse(dates[0])
-              .millisecondsSinceEpoch;
-          ts1 = DateTime
-              .parse(dates[1])
-              .millisecondsSinceEpoch;
+          ts0 = DateTime.parse(dates[0]).millisecondsSinceEpoch;
+          ts1 = DateTime.parse(dates[1]).millisecondsSinceEpoch;
         } catch (err) {
           ts0 = -1;
           ts1 = -1;
         }
         if (ts1 > -1) {
           int now = new DateTime.now().millisecondsSinceEpoch;
-          if (now  < ts1) {
-            timer= new Timer(new Duration(milliseconds:ts1 - now), delete);
+          if (now < ts1) {
+            timer = new Timer(new Duration(milliseconds: ts1 - now), delete);
           } else {
             DsTimer.callLater(delete);
           }
@@ -184,7 +177,6 @@ class TokenNode extends BrokerNode {
       token = configs[r'$$token'];
     }
 
-
     if (configs[r'$$group'] is String) {
       group = configs[r'$$group'];
     }
@@ -204,11 +196,13 @@ class TokenNode extends BrokerNode {
     if (count > 0 || managed) {
       DsTimer.timerOnceBefore(provider.saveTokensNodes, 1000);
     }
+
     if (count > 0) {
       count--;
       configs[r'$$count'] = count;
       updateList(r'$$count');
     }
+
     if (managed) {
       if (links == null) {
         links = [];
@@ -226,13 +220,13 @@ class TokenNode extends BrokerNode {
   void delete() {
     deleteLinks();
     parent.children.remove(id);
-    TokenGroupNode.tokens.remove(id);
+    provider.tokenGroupNode.tokens.remove(id);
     parent.updateList(id);
     provider.clearNode(this);
     DsTimer.timerOnceBefore(provider.saveTokensNodes, 1000);
   }
 
-  void deleteLinks(){
+  void deleteLinks() {
     if (links != null) {
       for (Object path in links) {
         if (path is String) {
@@ -250,7 +244,6 @@ class TokenNode extends BrokerNode {
   }
 }
 
-
 InvokeResponse deleteTokenNode(Map params, Responder responder,
     InvokeResponse response, LocalNode parentNode) {
   if (parentNode is TokenNode) {
@@ -262,13 +255,12 @@ InvokeResponse deleteTokenNode(Map params, Responder responder,
 
 InvokeResponse addTokenNode(Map params, Responder responder,
     InvokeResponse response, LocalNode parentNode) {
-
   if (params == null) {
     params = {};
   }
 
   if (parentNode is TokenGroupNode) {
-    String token = TokenGroupNode.makeToken();
+    String token = parentNode.makeToken();
     String tokenId = token.substring(0, 16);
     TokenNode node = new TokenNode('${parentNode.path}/$tokenId',
         parentNode.provider, parentNode, tokenId);
@@ -279,11 +271,13 @@ InvokeResponse addTokenNode(Map params, Responder responder,
     node.configs[r'$$group'] = params['Group'];
     node.configs[r'$$token'] = token;
     node.init();
-    TokenGroupNode.tokens[tokenId] = node;
+    parentNode.tokens[tokenId] = node;
     parentNode.children[tokenId] = node;
     parentNode.updateList(tokenId);
 
-    response.updateStream([[token]], streamStatus: StreamStatus.closed);
+    response.updateStream([
+      [token]
+    ], streamStatus: StreamStatus.closed);
     DsTimer.timerOnceBefore(
         (responder.nodeProvider as BrokerNodeProvider).saveTokensNodes, 1000);
     return response;

@@ -1,15 +1,15 @@
 part of dsbroker.broker;
 
 class ThroughPutController {
-  static ThroughPutNode messagesOutPerSecond;
-  static ThroughPutNode dataOutPerSecond;
-  static ThroughPutNode frameOutPerSecond;
-  
-  static ThroughPutNode messagesInPerSecond;
-  static ThroughPutNode dataInPerSecond;
-  static ThroughPutNode frameInPerSecond;
-  
-  static void initNodes(NodeProvider provider) {
+  ThroughPutNode messagesOutPerSecond;
+  ThroughPutNode dataOutPerSecond;
+  ThroughPutNode frameOutPerSecond;
+
+  ThroughPutNode messagesInPerSecond;
+  ThroughPutNode dataInPerSecond;
+  ThroughPutNode frameInPerSecond;
+
+  void initNodes(NodeProvider provider) {
     messagesOutPerSecond = new ThroughPutNode(
         "/sys/messagesOutPerSecond", provider)..configs[r"$type"] = "number";
     messagesInPerSecond = new ThroughPutNode(
@@ -19,25 +19,25 @@ class ThroughPutController {
         "/sys/frameOutPerSecond", provider)..configs[r"$type"] = "number";
     frameInPerSecond = new ThroughPutNode(
         "/sys/frameInPerSecond", provider)..configs[r"$type"] = "number";
-    
+
     dataOutPerSecond = new ThroughPutNode("/sys/dataOutPerSecond", provider)
       ..configs[r"$type"] = "number"..configs[r"@unit"] = "bytes";
     dataInPerSecond = new ThroughPutNode("/sys/dataInPerSecond", provider)
       ..configs[r"$type"] = "number"..configs[r"@unit"] = "bytes";
   }
 
-  static Timer _timer;
+  Timer _timer;
 
-  static void changeValue(Timer t) {
+  void changeValue(Timer t) {
     messagesInPerSecond.updateValue(WebSocketConnection.messageIn, force: true);
     dataInPerSecond.updateValue(WebSocketConnection.dataIn, force: true);
-    messagesOutPerSecond.updateValue(WebSocketConnection.messageOut,
-        force: true);
+
+    messagesOutPerSecond.updateValue(WebSocketConnection.messageOut, force: true);
     dataOutPerSecond.updateValue(WebSocketConnection.dataOut, force: true);
 
     frameInPerSecond.updateValue(WebSocketConnection.frameIn, force: true);
     frameOutPerSecond.updateValue(WebSocketConnection.frameOut, force: true);
-    
+
     WebSocketConnection.messageIn = 0;
     WebSocketConnection.dataIn = 0;
     WebSocketConnection.frameIn = 0;
@@ -46,10 +46,11 @@ class ThroughPutController {
     WebSocketConnection.frameOut = 0;
   }
 
-  static void set throughputNeeded(bool val) {
+  void set throughputNeeded(bool val) {
     if (val == WebSocketConnection.throughputEnabled) {
       return;
     }
+
     if (val) {
       WebSocketConnection.throughputEnabled = true;
       if (_timer == null) {
@@ -59,7 +60,7 @@ class ThroughPutController {
         WebSocketConnection.dataOut = 0;
         WebSocketConnection.frameOut = 0;
         WebSocketConnection.frameIn = 0;
-        _timer = new Timer.periodic(new Duration(seconds: 1), changeValue);
+        _timer = new Timer.periodic(const Duration(seconds: 1), changeValue);
       }
     } else {
       WebSocketConnection.throughputEnabled =
@@ -80,11 +81,12 @@ class ThroughPutNode extends BrokerStaticNode {
       : super(path, provider);
 
   bool throughputNeeded = false;
+
   @override
   RespSubscribeListener subscribe(callback(ValueUpdate), [int qos = 0]) {
     if (!throughputNeeded) {
       throughputNeeded = true;
-      ThroughPutController.throughputNeeded = true;
+      provider.throughput.throughputNeeded = true;
     }
     return super.subscribe(callback, qos);
   }
@@ -94,7 +96,7 @@ class ThroughPutNode extends BrokerStaticNode {
     super.unsubscribe(callback);
     if (throughputNeeded && callbacks.isEmpty) {
       throughputNeeded = false;
-      ThroughPutController.throughputNeeded = false;
+      provider.throughput.throughputNeeded = false;
     }
   }
 }

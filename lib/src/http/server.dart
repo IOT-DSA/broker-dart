@@ -179,9 +179,13 @@ class DsHttpServer {
     String tokenHash = request.requestedUri.queryParameters["token"];
     bool trusted = false;
 
-    if (tokenHash != null) {
+    if (tokenHash != null && nodeProvider is BrokerNodeProvider) {
       var tkn = tokenHash.substring(0, 16);
-      trusted = TokenGroupNode.trustedTokens.values.any((x) => x.id == tkn);
+      trusted = (nodeProvider as BrokerNodeProvider)
+        .tokenGroupNode
+        .trustedTokens
+        .values
+        .any((x) => x.id == tkn);
     }
 
     request.fold([], foldList).then((List<int> merged) {

@@ -3,6 +3,7 @@ part of dsbroker.broker;
 /// Wrapper node for brokers
 class BrokerNode extends LocalNodeImpl with BrokerNodePermission {
   final BrokerNodeProvider provider;
+
   BrokerNode(String path, this.provider) : super(path);
 
   @override
@@ -44,9 +45,7 @@ class BrokerStaticNode extends BrokerNode {
 
 /// Version node
 class BrokerVersionNode extends BrokerStaticNode {
-  static BrokerVersionNode instance;
   BrokerVersionNode(String path, BrokerNodeProvider provider, String version) : super(path, provider) {
-    instance = this;
     configs[r"$type"] = "string";
     updateValue(version);
   }
@@ -54,9 +53,7 @@ class BrokerVersionNode extends BrokerStaticNode {
 
 /// Start Time node
 class StartTimeNode extends BrokerStaticNode {
-  static StartTimeNode instance;
   StartTimeNode(String path, BrokerNodeProvider provider) : super(path, provider) {
-    instance = this;
     configs[r"$type"] = "time";
     updateValue(ValueUpdate.getTs());
   }
@@ -64,7 +61,6 @@ class StartTimeNode extends BrokerStaticNode {
 
 /// Clear Conns node
 class ClearConnsAction extends BrokerStaticNode {
-
   ClearConnsAction(String path, BrokerNodeProvider provider) : super(path, provider) {
     configs[r"$name"] = "Clear Conns";
     configs[r"$invokable"] = "config";
@@ -80,17 +76,17 @@ class ClearConnsAction extends BrokerStaticNode {
 }
 
 class RootNode extends BrokerNode {
-  static IValueStorageBucket bucket;
-  static IValueStorage uuidStorage;
+  IValueStorageBucket bucket;
+  IValueStorage uidStorage;
 
   RootNode(String path, BrokerNodeProvider provider) : super(path, provider) {
     configs[r"$is"] = "dsa/broker";
     bucket = provider.storage.getOrCreateValueStorageBucket("ids");
-    uuidStorage = bucket.getValueStorage("broker");
-    uuidStorage.getValueAsync().then((id) {
+    uidStorage = bucket.getValueStorage("broker");
+    uidStorage.getValueAsync().then((id) {
       if (id == null) {
         id = generateToken();
-        uuidStorage.setValue(id);
+        uidStorage.setValue(id);
       }
       configs[r"$uid"] = id;
     });
@@ -520,7 +516,6 @@ class UpstreamBrokerNode extends BrokerNode {
     enabled = false;
   }
 }
-
 
 class BrokerHiddenNode extends BrokerNode {
   BrokerHiddenNode(String path, BrokerNodeProvider provider) : super(path, provider) {

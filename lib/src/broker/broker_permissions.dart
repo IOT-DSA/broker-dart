@@ -4,18 +4,19 @@ class PermissionPair {
   String group;
   int permission;
   bool isDefault;
+
   PermissionPair(this.group, this.permission) {
     isDefault = (group == 'default');
   }
 }
 
-
 abstract class BrokerNodePermission {
   List<PermissionPair> permissionList;
 
   BrokerNodePermission getPermissionChild(String str);
-  
-  void getPermission(Iterator<String> paths, List<String> groups, List<int> output) {
+
+  void getPermission(Iterator<String> paths, List<String> groups,
+    List<int> output) {
     // find permission for group
     if (permissionList != null) {
       int len = groups.length;
@@ -52,7 +53,7 @@ abstract class BrokerNodePermission {
 
       for (var pair in l) {
         if (pair is List && pair.length == 2 && pair[0] is String &&
-            pair[1] is String) {
+          pair[1] is String) {
           String key = pair[0];
           String p = pair[1];
           int pint = Permission.parse(p);
@@ -87,9 +88,9 @@ abstract class BrokerNodePermission {
 
 
 class VirtualNodePermission extends BrokerNodePermission {
-  Map<String, VirtualNodePermission> children = new Map<
-      String,
-      VirtualNodePermission>();
+  Map<String, VirtualNodePermission> children =
+    new Map<String, VirtualNodePermission>();
+
   BrokerNodePermission getPermissionChild(String str) {
     return children[str];
   }
@@ -123,13 +124,15 @@ class VirtualNodePermission extends BrokerNodePermission {
 class BrokerPermissions implements IPermissionManager {
   RootNode root;
 
-  BrokerPermissions() {
-  }
+  BrokerPermissions();
 
   int getPermission(String path, Responder resp) {
     if (root != null) {
-      List<int> output = new List<int>.filled(resp.groups.length, Permission.NONE);
-      var iterator  = path.split('/').iterator;
+      List<int> output = new List<int>.filled(
+        resp.groups.length, Permission.NONE);
+      var iterator = path
+        .split('/')
+        .iterator;
       // remove first ""
       iterator.moveNext();
       root.getPermission(iterator, resp.groups, output);

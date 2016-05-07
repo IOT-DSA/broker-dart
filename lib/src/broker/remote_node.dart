@@ -2,9 +2,10 @@ part of dsbroker.broker;
 
 class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
   final Map<String, RemoteLinkNode> nodes = new Map<String, RemoteLinkNode>();
-  Requester requester;
   final String path;
   final BrokerNodeProvider broker;
+
+  Requester requester;
   RemoteLinkRootNode rootNode;
 
   bool inTree = false;
@@ -138,9 +139,6 @@ class RemoteLinkManager implements NodeProvider, RemoteNodeCache {
 }
 
 class RemoteLinkNode extends RemoteNode implements LocalNode {
-  /// storage bucket for override attributes
-  static IValueStorageBucket storageBucket;
-
   final BrokerNodeProvider provider;
 
   ListController createListController(Requester requester) {
@@ -233,6 +231,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     }
     _valueReady = true;
   }
+
   void clearValue() {
     _valueReady = false;
     _lastValueUpdate = null;
@@ -243,8 +242,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
   /// root of the link
   RemoteLinkManager _linkManager;
 
-  RemoteLinkNode(this.path, this.provider, String remotePath, this._linkManager)
-  : super(remotePath) {
+  RemoteLinkNode(this.path, this.provider, String remotePath, this._linkManager) : super(remotePath) {
   }
 
   bool _listReady = false;
@@ -453,9 +451,8 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     }
   }
 
-
   IValueStorage _attributeStorage;
-  Map overrideAttributes= {};
+  Map overrideAttributes = {};
   Map downstreamAttributes = {};
   Object getOverideAttributes(String attr) {
     return overrideAttributes[attr];
@@ -465,9 +462,11 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     if (!clear && value is Map && value['@'] == 'clear') {
       clear = true;
     }
-    if (_attributeStorage == null && storageBucket != null) {
-      _attributeStorage = storageBucket.getValueStorage(path);
+
+    if (_attributeStorage == null && provider.attributeStorageBucket != null) {
+      _attributeStorage = provider.attributeStorageBucket.getValueStorage(path);
     }
+
     if (clear) {
       if (overrideAttributes.containsKey(name)) {
         overrideAttributes.remove(name);
@@ -524,7 +523,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
 
   /// reset node cache when remote list api require a reset of the node data
   /// this is done by a new $is in list update
-  void resetNodeCache(){
+  void resetNodeCache() {
     configs.clear();
     attributes.clear();
     downstreamAttributes.clear();

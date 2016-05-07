@@ -14,8 +14,6 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   BrokerPermissions permissions;
 
   IStorageManager storage;
-//  Completer _done = new Completer();
-//  Future get done => _done.future;
 
   String downstreamName;
   /// name with 1 slash
@@ -25,20 +23,34 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   RootNode root;
   BrokerNode connsNode;
-  BrokerNode dataNode;
+  BrokerDataRoot dataNode;
   BrokerNode usersNode;
   BrokerNode defsNode;
   BrokerNode upstreamDataNode;
   BrokerNode quarantineNode;
   BrokerNode tokens;
 
-  Map rootStructure = {'users': {}, 'defs': {}, 'sys': {'tokens': {}}, 'upstream': {}};
+  Map rootStructure = {
+    'users': {},
+    'defs': {},
+    'sys': {
+      'tokens': {}
+    },
+    'upstream': {}
+  };
 
   bool shouldSaveFiles = true;
   bool enabledQuarantine = false;
   bool enabledPermission = false;
   bool enabledDataNodes = false;
   bool acceptAllConns = true;
+
+  ThroughPutController throughput;
+  BrokerTraceNode traceNode;
+  TokenGroupNode tokenGroupNode;
+  UpstreamNode upstream;
+
+  IValueStorageBucket attributeStorageBucket;
 
   BrokerNodeProvider({
     this.enabledQuarantine: false,
@@ -53,7 +65,11 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     }
 
     this.storage = storage;
+
+    throughput = new ThroughPutController();
     permissions = new BrokerPermissions();
+    traceNode = new BrokerTraceNode(this);
+
     // initialize root nodes
     root = new RootNode('/', this);
 
@@ -87,8 +103,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     enabledPermission = defaultPermission != null;
 
     if (enabledPermission) {
-      root.loadPermission(
-        defaultPermission); //['dgSuper','config','default','write']
+      // example: ['dgSuper', 'config', 'default', 'write']
+      root.loadPermission(defaultPermission);
       defsNode.loadPermission(['default', 'read']);
       permissions.root = root;
     }
@@ -140,14 +156,12 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     new ClearConnsAction("/sys/clearConns", this);
     new UpdatePermissionAction("/sys/updatePermissions", this);
 
-    ThroughPutController.initNodes(this);
+    throughput.initNodes(this);
 
     upstream = new UpstreamNode("/sys/upstream", this);
 
-    BrokerTraceNode.init(this);
+    traceNode.init();
   }
-
-  UpstreamNode upstream;
 
   /// load a fixed profile map
   loadDef() async {
@@ -251,7 +265,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   loadOverrideAttributes() async {
     IValueStorageBucket storageBucket = storage.getOrCreateValueStorageBucket('attribute');
-    RemoteLinkNode.storageBucket = storageBucket;
+    attributeStorageBucket = storageBucket;
     logger.finest('loading proxy attributes');
     Map values = await storageBucket.load();
     values.forEach((key, val) {
@@ -265,12 +279,14 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   }
 
   loadDataNodes() async {
-    if (storage != null) {
-      BrokerDataNode.storageBucket = storage
-        .getOrCreateValueStorageBucket('data');
-    }
     logger.finest('Loading Data Nodes');
     dataNode = new BrokerDataRoot('/data', this);
+    if (storage != null) {
+      dataNode.storageBucket = storage
+        .getOrCreateValueStorageBucket('data');
+    }
+    dataNode.init();
+
     root.children['data'] = dataNode;
     nodes['/data'] = dataNode;
 
@@ -286,12 +302,12 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     } catch (err) {}
 
     if (storage != null) {
-       Map values = await BrokerDataNode.storageBucket.load();
+       Map values = await dataNode.storageBucket.load();
        values.forEach((key, val) {
          if (nodes[key] is BrokerDataNode) {
            nodes[key].updateValue(val);
          } else {
-           BrokerDataNode.storageBucket.getValueStorage(key).destroy();
+           dataNode.storageBucket.getValueStorage(key).destroy();
          }
        });
     }
@@ -658,7 +674,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     }
 
     if (token != null && token != '') {
-      TokenNode tokenNode = TokenGroupNode.findTokenNode(token, fullId);
+      TokenNode tokenNode = tokenGroupNode.findTokenNode(token, fullId);
       if (tokenNode != null) {
         BrokerNode target = tokenNode.getTargetNode();
 

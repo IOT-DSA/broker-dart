@@ -1,7 +1,6 @@
 part of dsbroker.broker;
 
 class UpdatePermissionAction extends BrokerStaticNode {
-
   UpdatePermissionAction(String path, BrokerNodeProvider provider) : super(path, provider) {
     configs[r"$name"] = "Update Permissions";
     configs[r"$invokable"] = "read";
@@ -21,7 +20,7 @@ class UpdatePermissionAction extends BrokerStaticNode {
   InvokeResponse invoke(Map params, Responder responder,
       InvokeResponse response, LocalNode parentNode,
       [int maxPermission = Permission.CONFIG]) {
-    if (maxPermission == Permission.CONFIG && params != null 
+    if (maxPermission == Permission.CONFIG && params != null
         && params['Path'] is String) {
       List permissions;
       if (params['Permissions'] is List) {
@@ -30,7 +29,7 @@ class UpdatePermissionAction extends BrokerStaticNode {
       String path = params['Path'];
       int permission = provider.permissions.getPermission(path, responder);
       if (permission == Permission.CONFIG) {
-        
+
         if (permissions == null) {
           LocalNode node = provider.getNode(path);
           if (node is BrokerNode) {
@@ -61,13 +60,13 @@ class UpdatePermissionAction extends BrokerStaticNode {
               node._linkManager.rootNode.persist();
             }
           }
-        } 
+        }
       }
     }
-    
+
     return response..close();
   }
-  
+
   Map getSimpleMap() {
     Map rslt = super.getSimpleMap();
     rslt[r'$hidden'] = true;

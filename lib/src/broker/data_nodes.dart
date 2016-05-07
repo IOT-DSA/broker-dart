@@ -1,15 +1,13 @@
 part of dsbroker.broker;
 
 class BrokerDataNode extends BrokerNode {
-  static IValueStorageBucket storageBucket;
-
   IValueStorage storage;
   BrokerNode parent;
 
   BrokerDataNode(String path, BrokerNodeProvider provider)
     : super(path, provider) {
-    if (storageBucket != null) {
-      storage = storageBucket.getValueStorage(path);
+    if (provider.dataNode != null && provider.dataNode.storageBucket != null) {
+      storage = provider.dataNode.storageBucket.getValueStorage(path);
     }
     configs[r'$is'] = 'broker/dataNode';
     profile = provider.getOrCreateNode('/defs/profile/broker/dataNode', false);
@@ -57,6 +55,7 @@ class BrokerDataNode extends BrokerNode {
 }
 
 class BrokerDataRoot extends BrokerDataNode {
+  IValueStorageBucket storageBucket;
   BrokerNode parent;
 
   BrokerDataRoot(String path, BrokerNodeProvider provider)
@@ -66,6 +65,10 @@ class BrokerDataRoot extends BrokerDataNode {
     profile = provider.getOrCreateNode('/defs/profile/broker/dataRoot', false);
     // avoid parent checking
     parent = this;
+  }
+
+  void init() {
+    storage = storageBucket.getValueStorage(path);
   }
 }
 

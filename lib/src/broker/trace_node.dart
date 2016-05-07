@@ -1,14 +1,10 @@
 part of dsbroker.broker;
 
 class BrokerTraceNode extends BrokerHiddenNode {
-  static BrokerTraceNode traceNode;
-  static void init(BrokerNodeProvider broker) {
-    if (traceNode == null) {
-      traceNode = new BrokerTraceNode(broker);
-      broker.setNode("/sys/trace", traceNode);
-      broker.setNode("/sys/trace/traceRequester", traceNode.traceRequester);
-      broker.setNode("/sys/trace/traceConnection", traceNode.traceConnection);
-    }
+  void init() {
+    provider.setNode("/sys/trace", this);
+    provider.setNode("/sys/trace/traceRequester", traceRequester);
+    provider.setNode("/sys/trace/traceConnection", traceConnection);
   }
 
   BrokerTraceNode(BrokerNodeProvider provider) : super("/sys/trace", provider) {
