@@ -537,6 +537,10 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
   void overrideListChangeController(BroadcastStreamController<String> controller) {
     _listChangeController = controller;
   }
+
+  @override
+  void load(Map<String, dynamic> map) {
+  }
 }
 
 class RemoteLinkListController extends ListController {
