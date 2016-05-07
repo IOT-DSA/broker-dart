@@ -46,6 +46,7 @@ class BrokerStaticNode extends BrokerNode {
 /// Version node
 class BrokerVersionNode extends BrokerStaticNode {
   BrokerVersionNode(String path, BrokerNodeProvider provider, String version) : super(path, provider) {
+    configs[r"$name"] = "DSA Version";
     configs[r"$type"] = "string";
     updateValue(version);
   }
@@ -54,6 +55,7 @@ class BrokerVersionNode extends BrokerStaticNode {
 /// Start Time node
 class StartTimeNode extends BrokerStaticNode {
   StartTimeNode(String path, BrokerNodeProvider provider) : super(path, provider) {
+    configs[r"$name"] = "Start Time";
     configs[r"$type"] = "time";
     updateValue(ValueUpdate.getTs());
   }
