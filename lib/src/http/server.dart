@@ -182,7 +182,7 @@ class DsHttpServer {
     if (tokenHash != null && nodeProvider is BrokerNodeProvider) {
       var tkn = tokenHash.substring(0, 16);
       trusted = (nodeProvider as BrokerNodeProvider)
-        .tokenGroupNode
+        .tokenContext
         .trustedTokens
         .values
         .any((x) => x.id == tkn);

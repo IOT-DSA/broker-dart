@@ -47,10 +47,11 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   ThroughPutController throughput;
   BrokerTraceNode traceNode;
-  TokenGroupNode tokenGroupNode;
   UpstreamNode upstream;
 
   IValueStorageBucket attributeStorageBucket;
+
+  TokenContext tokenContext;
 
   BrokerNodeProvider({
     this.enabledQuarantine: false,
@@ -69,6 +70,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     throughput = new ThroughPutController();
     permissions = new BrokerPermissions();
     traceNode = new BrokerTraceNode(this);
+    tokenContext = new TokenContext(this);
 
     // initialize root nodes
     root = new RootNode('/', this);
@@ -674,7 +676,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     }
 
     if (token != null && token != '') {
-      TokenNode tokenNode = tokenGroupNode.findTokenNode(token, fullId);
+      TokenNode tokenNode = tokenContext.findTokenNode(token, fullId);
       if (tokenNode != null) {
         BrokerNode target = tokenNode.getTargetNode();
 
