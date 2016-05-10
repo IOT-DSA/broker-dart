@@ -11,7 +11,7 @@
 
 ```bash
 # Globally install the Dart DSA Broker
-pub global activate -sgit https://github.com/IOT-DSA/broker-dart.git
+pub global activate -s git https://github.com/IOT-DSA/broker-dart.git
 ```
 
 ### Start a Broker
