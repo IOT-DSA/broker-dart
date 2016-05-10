@@ -32,14 +32,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   BrokerStatsNode stats;
 
-  Map rootStructure = {
-    'users': {},
-    'defs': {},
-    'sys': {
-      'tokens': {}
-    },
-    'upstream': {}
-  };
+  Map rootStructure = {'users': {}, 'defs': {}, 'sys': {'tokens': {}}, 'upstream': {}, 'quarantine':{}};
+
 
   bool shouldSaveFiles = true;
   bool enabledQuarantine = false;
@@ -55,10 +49,15 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   TokenContext tokenContext;
 
+  ApproveDslinkAction approveDslinkAction;
+  KickDslinkAction kickDslinkAction;
+  
+  List defaultPermission;
+  
   BrokerNodeProvider({
     this.enabledQuarantine: false,
     this.acceptAllConns: true,
-    List defaultPermission,
+    this.defaultPermission,
     this.downstreamName: 'conns',
     IStorageManager storage,
     this.enabledDataNodes: true
@@ -78,9 +77,6 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     root = new RootNode('/', this);
 
     nodes['/'] = root;
-    if (enabledQuarantine) {
-      rootStructure['quarantine'] = {};
-    }
 
     if (downstreamName == null ||
       downstreamName == '' ||
@@ -112,6 +108,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       defsNode.loadPermission(['default', 'read']);
       permissions.root = root;
     }
+    
   }
 
   loadAll() async {
@@ -167,6 +164,12 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     stats = new BrokerStatsNode("/sys/stats", this);
 
     stats.init();
+    
+    approveDslinkAction = new ApproveDslinkAction('/quarantine/approve', this);
+    if (defaultPermission != null) {
+      approveDslinkAction.updateGroups(defaultPermission);
+    }
+    kickDslinkAction = new KickDslinkAction('/quarantine/kick', this);
   }
 
   /// load a fixed profile map
@@ -225,11 +228,6 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         }
         node.load(m);
         usersNode.children[name] = node;
-        if (enabledQuarantine) {
-          String path = '/quarantine/$name';
-          BrokerNode node = getOrCreateNode(path, false);
-          quarantineNode.children[name] = node;
-        }
       });
     } catch (err) {}
   }
@@ -252,6 +250,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     try {
       String data = await connsFile.readAsString();
       Map m = DsJson.decode(data);
+      List names = [];
       m.forEach((String name, Map m) {
         String path = '$downstreamNameSS$name';
         RemoteLinkRootNode node = getOrCreateNode(path, false);
@@ -265,7 +264,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
           _id2connPath[node.configs[r'$$dsId']] = path;
           _connPath2id[path] = node.configs[r'$$dsId'];
         }
+        names.add(name);
       });
+      kickDslinkAction.updateNames(names);
     } catch (err) {}
   }
 
@@ -362,7 +363,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   Future<Map> saveConns() async {
     Map m = {};
+    List names = [];
     connsNode.children.forEach((String name, RemoteLinkNode node) {
+      names.add(name);
       RemoteLinkManager manager = node._linkManager;
       m[name] = manager.rootNode.serialize(false);
     });
@@ -370,9 +373,19 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (shouldSaveFiles) {
       await connsFile.writeAsString(DsJson.encode(m));
     }
+    kickDslinkAction.updateNames(names);
     return m;
   }
-
+  void updateQuarantineIds() {
+    List qIds = [];
+    quarantineNode.children.forEach((String key, BrokerNode node) {
+      Object id = node.configs[r'$$dsId'];
+      if (id is String) {
+        qIds.add(id);
+      }
+    });
+    approveDslinkAction.updateDsId(qIds);
+  }
   // remove disconnected nodes from the conns node
   void clearConns() {
     List names = connsNode.children.keys.toList();
@@ -545,27 +558,19 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       node = conn.getOrCreateNode(path, false);
     } else if (path.startsWith('/quarantine/')) {
       List paths = path.split('/');
-      String user = paths[2];
-      if (paths.length > 3) {
-        String connName = paths[3];
-        String connPath = '/quarantine/$user/$connName';
+      if (paths.length > 2) {
+        String connName = paths[2];
+        String connPath = '/quarantine/$connName';
         RemoteLinkManager conn = conns[connPath];
         if (conn == null) {
           // TODO conn = new RemoteLinkManager('$downstreamNameSS$connName', connRootNodeData);
           conn = new RemoteLinkManager(this, connPath, this);
           conns[connPath] = conn;
           nodes[connPath] = conn.rootNode;
-          BrokerNode quarantineUser =
-          getOrCreateNode('/quarantine/$user', false);
-          conn.rootNode.parentNode = quarantineUser;
-//          if (addToTree) {
-//            quarantineUser.children[connName] = conn.rootNode;
-//            conn.inTree = true;
-//            quarantineUser.updateList(connName);
-//          }
-
+          conn.rootNode.parentNode = quarantineNode;
         }
         node = conn.getOrCreateNode(path, false);
+        DsTimer.timerOnceAfter(updateQuarantineIds, 1000);
       } else {
         node = new BrokerNode(path, this);
       }
@@ -612,7 +617,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     return conns[path];
   }
 
-  String makeConnPath(String fullId) {
+  String makeConnPath(String fullId, [bool allowed = false]) {
     if (_id2connPath.containsKey(fullId)) {
       return _id2connPath[fullId];
       // TODO is it possible same link get added twice?
@@ -637,18 +642,18 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       _connPath2id[connPath] = fullId;
       _id2connPath[fullId] = connPath;
       return connPath;
-    } else if (acceptAllConns) {
+    } else if (acceptAllConns || allowed) {
       // device link
       String connPath;
       String folderPath = downstreamNameSS;
 
       String dsId = fullId;
-      if (fullId.contains(':')) {
-        // uname:dsId
-        List<String> u_id = fullId.split(':');
-        folderPath = '/quarantine/${u_id[0]}/';
-        dsId = u_id[1];
-      }
+//      if (fullId.contains(':')) {
+//        // uname:dsId
+//        List<String> u_id = fullId.split(':');
+//        folderPath = '/quarantine/${u_id[0]}/';
+//        dsId = u_id[1];
+//      }
 
       // find a connName for it, keep append characters until find a new name
       int i = 43;
@@ -668,6 +673,15 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       }
 
       DsTimer.timerOnceBefore(saveConns, 3000);
+      return connPath;
+    } else if (enabledQuarantine) {
+      String connPath;
+      String folderPath = '/quarantine/';
+      connPath = '$folderPath$fullId';
+      if (!_connPath2id.containsKey(connPath)) {
+        _connPath2id[connPath] = fullId;
+        _id2connPath[fullId] = connPath;
+      }
       return connPath;
     } else {
       return null;
@@ -827,11 +841,37 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     return _links[str];
   }
 
+  void onLinkDisconnected(ServerLink link) {
+    if (_links[link.dsId] == link) {
+      String connPath = makeConnPath(link.dsId);
+      if (connPath.startsWith('/quarantine/')){
+        
+        _connPath2id.remove(connPath);
+        if (_id2connPath[link.dsId] == connPath) {
+          // it's also possible that the path is already moved to downstream
+          // in that case, don't remove, wait for it to connect
+          _id2connPath.remove(link.dsId);
+        }
+        
+        quarantineNode.children.remove(link.dsId);
+        conns[connPath].inTree = false;
+        // remove server link if it's not connected
+//        _links.remove(link.dsId);
+        quarantineNode.updateList(link.dsId);
+        DsTimer.timerOnceAfter(updateQuarantineIds, 1000);
+      }
+    }
+  }
+  
   void removeLink(BaseLink link, String id, {bool force: false}) {
     if (_links[id] == link || force) {
       // TODO: any extra work needed in responder or requester?
       // link.responder.destroy();
       // link.requester.destroy();
+      
+      // run this before it's really triggered
+      onLinkDisconnected(link);
+      link.close();
       _links.remove(id);
       if (link is HttpServerLink && link.session != '') {
         // fully destroy user link
@@ -852,6 +892,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
             }
           }
         }
+        
       }
     }
   }
@@ -905,7 +946,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (connPath == null) return null;
     RemoteLinkNode node = getOrCreateNode(connPath, false);
     Responder rslt = node._linkManager.getResponder(nodeProvider, dsId, sessionId);
-    if (node.configs[r'$$group'] is String) {
+    if (connPath.startsWith('/quarantine/')) {
+      rslt.updateGroups([':quarantine'], true);
+    } else if (node.configs[r'$$group'] is String) {
       List groups = (node.configs[r'$$group'] as String).split(',');
       rslt.updateGroups(groups);
     }

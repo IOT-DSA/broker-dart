@@ -33,6 +33,10 @@ class DsSimpleLinkManager implements ServerLinkManager {
   String getLinkPath(String dsId, String token) {
     return "/$dsId";
   }
+
+  void onLinkDisconnected(ServerLink link) {
+    
+  }
 }
 
 class DsHttpServer {
@@ -227,7 +231,8 @@ class DsHttpServer {
             _linkManager,
             token: tokenHash,
             nodeProvider: nodeProvider,
-            enableTimeout: true
+            enableTimeout: true,
+            onDisconnect: onLinkDisconnected
           );
 
           if (trusted) {
@@ -278,5 +283,9 @@ class DsHttpServer {
     } else {
       throw HttpStatus.UNAUTHORIZED;
     }
+  }
+  
+  void onLinkDisconnected(HttpServerLink link) {
+    print('disconnect');
   }
 }
