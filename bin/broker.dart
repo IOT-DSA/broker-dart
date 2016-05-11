@@ -150,7 +150,8 @@ main(List<String> _args) async {
       var url = upstream[name]["url"];
       var ourName = upstream[name]["name"];
       var enabled = upstream[name]["enabled"];
-      broker.upstream.addUpstreamConnection(name, url, ourName, enabled);
+      var group = upstream[name]["group"];
+      broker.upstream.addUpstreamConnection(name, url, ourName, group, enabled);
     }
   }
 

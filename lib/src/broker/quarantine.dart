@@ -14,7 +14,7 @@ class AuthorizeDslinkAction extends BrokerStaticNode {
       },
       {
         "name": "Group",
-        "type": "enum",
+        "type": "string",
       },
       {
         "name": "Name",
@@ -26,18 +26,24 @@ class AuthorizeDslinkAction extends BrokerStaticNode {
   }
   
   void updateGroups(List defaultPermission) {
+    if (defaultPermission == null) {
+      return;
+    }
     List groups = [];
     for (List p in defaultPermission) {
       groups.add(p[0]);
     }
+    groups.sort();
     params[1] = {
       "name": "Group",
-      "type": "enum[${groups.join(',')}]"
+      "type": "string",
+      "editor": "enum[${groups.join(',')}]"
     };
     updateList(r'$params');
   }
   
   void updateDsId(List dsids) {
+    dsids.sort();
     params[0] = {
       "name": "DsId",
       "type": "enum[${dsids.join(',')}]"

@@ -117,6 +117,12 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     permissions.root = root;
   }
   
+  void updateDefaultGroups(List list) {
+    root.loadPermission(list);
+    approveDslinkAction.updateGroups(list);
+    upstream.crateActoin.updateGroups(list);
+  }
+  
   static void fixPermissionList(List plist) {
     Map builtinpermissions = {
       ':trustedLink':'config',
@@ -189,6 +195,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
     throughput.initNodes(this);
     upstream = new UpstreamNode("/sys/upstream", this);
+    
     traceNode.init();
 
     stats = new BrokerStatsNode("/sys/stats", this);
@@ -901,9 +908,13 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       // TODO: any extra work needed in responder or requester?
       // link.responder.destroy();
       // link.requester.destroy();
+  
+      if (link is ServerLink) {
+        // check if it's a quaratine link
+        // run this before disconnect event really happens
+        onLinkDisconnected(link);
+      }
       
-      // run this before it's really triggered
-      onLinkDisconnected(link);
       link.close();
       _links.remove(id);
       if (link is HttpServerLink && link.session != '') {
