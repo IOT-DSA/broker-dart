@@ -127,7 +127,7 @@ class BrokerPermissions implements IPermissionManager {
   BrokerPermissions();
 
   int getPermission(String path, Responder resp) {
-    if (root != null) {
+    if (root != null && root.permissionList != null) {
       List<int> output = new List<int>.filled(
         resp.groups.length, Permission.NONE);
       var iterator = path
