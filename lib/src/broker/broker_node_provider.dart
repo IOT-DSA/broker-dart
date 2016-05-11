@@ -25,19 +25,19 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   BrokerNode connsNode;
   BrokerDataRoot dataNode;
   BrokerNode usersNode;
-  BrokerNode defsNode;
+  BrokerHiddenNode defsNode;
+  BrokerNode sysNode;
   BrokerNode upstreamDataNode;
   BrokerNode quarantineNode;
   BrokerNode tokens;
 
   BrokerStatsNode stats;
 
-  Map rootStructure = {'users': {}, 'defs': {}, 'sys': {'tokens': {}}, 'upstream': {}, 'quarantine':{}};
+  Map rootStructure = {'users': {}, 'sys': {'tokens': {}}, 'upstream': {}, 'quarantine':{}};
 
 
   bool shouldSaveFiles = true;
   bool enabledQuarantine = false;
-  bool enabledPermission = false;
   bool enabledDataNodes = false;
   bool acceptAllConns = true;
 
@@ -89,47 +89,55 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     rootStructure[downstreamName] = {};
 
     root.load(rootStructure);
+    
+    defsNode = new BrokerHiddenNode('/defs', this);
+    root.addChild('defs', defsNode);
+    
     connsNode = nodes[downstreamNameS];
     connsNode.configs[r"$downstream"] = true;
     root.configs[r"$downstream"] = downstreamNameS;
     usersNode = nodes['/users'];
     dataNode = nodes['/data'];
-    defsNode = nodes['/defs'];
+    sysNode = nodes['/sys'];
     quarantineNode = nodes['/quarantine'];
     upstreamDataNode = nodes['/upstream'];
     tokens = nodes['/sys/tokens'];
     new BrokerQueryNode("/sys/query", this);
 
-    enabledPermission = defaultPermission != null;
 
-    if (enabledPermission) {
-      Map builtinpermissions = {
-        ':config':'config',
-        ':read':'read',
-        ':write':'write',
-        ':user':'read'
-      };
-      Map builtincheck = {};
-      for (List l in defaultPermission) {
-        builtinpermissions.forEach((String g, String p){
-          if (l[0] == g){
-            builtinpermissions[g] = null;
-          }
-        });
-      }
-      
-      builtinpermissions.forEach((String g, String p){
-        if (p != null){
-          defaultPermission.insert(0, [g, p]);
-        }
-      });
-      
+    if (defaultPermission != null) {
+      fixPermissionList(defaultPermission);
       // example: ['dgSuper', 'config', 'default', 'write']
       root.loadPermission(defaultPermission);
-      defsNode.loadPermission(['default', 'read']);
-      permissions.root = root;
+    }
+    defsNode.loadPermission([['default', 'read']]);
+    sysNode.loadPermission([[':config', 'config'],['default', 'none']]);
+    quarantineNode.loadPermission([[':config', 'config'],['default', 'none']]);
+    
+    permissions.root = root;
+  }
+  
+  static void fixPermissionList(List plist) {
+    Map builtinpermissions = {
+      ':user':'read',
+      ':config':'config',
+      ':write':'write',
+      ':read':'read',
+    };
+    Map builtincheck = {};
+    for (List l in plist) {
+      builtinpermissions.forEach((String g, String p){
+        if (l[0] == g){
+          builtinpermissions[g] = null;
+        }
+      });
     }
     
+    builtinpermissions.forEach((String g, String p){
+      if (p != null){
+        plist.insert(0, [g, p]);
+      }
+    });
   }
 
   loadAll() async {
@@ -185,6 +193,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     stats = new BrokerStatsNode("/sys/stats", this);
 
     stats.init();
+    
+    
+    new BrokerStaticNode("/sys/quarantine", this);
     
     approveDslinkAction = new AuthorizeDslinkAction('/quarantine/authorize', this);
     if (defaultPermission != null) {
@@ -244,9 +255,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       m.forEach((String name, Map m) {
         String path = '/users/$name';
         UserRootNode node = getOrCreateNode(path, false);
-        if (enabledPermission) {
-          node.loadPermission([[name, 'config'], ['default', 'none']]);
-        }
+        node.loadPermission([[name, 'config'], ['default', 'none']]);
         node.load(m);
         usersNode.children[name] = node;
       });
@@ -426,7 +435,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         connsNode.updateList(name);
       }
     }
-    DsTimer.timerOnceAfter(saveConns, 3000);
+    DsTimer.timerOnceAfter(saveConns, 1000);
   }
 
   void clearUpstreamNodes() {
@@ -452,7 +461,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         upstreamDataNode.updateList(name);
       }
     }
-    DsTimer.timerOnceAfter(saveConns, 3000);
+    DsTimer.timerOnceAfter(saveConns, 1000);
   }
 
   /// add a node to the tree
@@ -796,6 +805,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       conn.rootNode.parentNode = parentNode;
       conn.inTree = true;
       parentNode.updateList(connName);
+      DsTimer.timerOnceAfter(saveConns, 1000);
     }
     return conn;
   }
@@ -857,6 +867,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         conn.rootNode.parentNode = parentNode;
         conn.inTree = true;
         parentNode.updateList(connName);
+        DsTimer.timerOnceAfter(saveConns, 1000);
       }
     }
     return _links[str];
@@ -931,7 +942,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         _id2connPath.remove(dsId);
         link.close();
         _links.remove(dsId);
-        DsTimer.timerOnceAfter(saveConns, 3000);
+        DsTimer.timerOnceAfter(saveConns, 1000);
       }
 
       String name = node.path.split('/').last;

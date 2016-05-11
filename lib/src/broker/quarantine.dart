@@ -147,3 +147,4 @@ class KickDslinkAction extends BrokerStaticNode {
     return response..close();
   }
 }
+
