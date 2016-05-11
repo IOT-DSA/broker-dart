@@ -60,13 +60,13 @@ class HttpServerLink implements ServerLink {
   HttpServerLink(String id, this.publicKey, ServerLinkManager linkManager,
       {NodeProvider nodeProvider,
       this.session, this.token,
-      this.enableTimeout: false, this.enableAck: true, this.onDisconnect})
+      this.enableTimeout: false, this.enableAck: true, this.onDisconnect, bool trusted: false})
       : dsId = id {
       path = linkManager.getLinkPath(id, token);
       if (path != null) {
         requester = linkManager.getRequester(id);
         if (nodeProvider != null){
-          responder = linkManager.getResponder(id, nodeProvider, session);
+          responder = linkManager.getResponder(id, nodeProvider, session, trusted);
         }
       }
 

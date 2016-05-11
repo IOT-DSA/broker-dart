@@ -119,6 +119,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   
   static void fixPermissionList(List plist) {
     Map builtinpermissions = {
+      ':trustedLink':'config',
       ':user':'read',
       ':config':'config',
       ':write':'write',
@@ -973,7 +974,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   }
 
   Responder getResponder(String dsId, NodeProvider nodeProvider,
-    [String sessionId = '']) {
+    [String sessionId = '', bool trusted = false]) {
     String connPath = makeConnPath(dsId);
     if (connPath == null) return null;
     RemoteLinkNode node = getOrCreateNode(connPath, false);
@@ -984,6 +985,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     } else if (node.configs[r'$$group'] is String) {
       List groups = (node.configs[r'$$group'] as String).split(',');
       rslt.updateGroups(groups);
+    } else if (trusted) {
+      rslt.updateGroups([':trustedLink']);
     }
     if (storage != null && sessionId == '' && rslt.storage == null) {
       rslt.storage = storage.getOrCreateSubscriptionStorage(connPath);

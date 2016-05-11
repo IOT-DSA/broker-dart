@@ -23,7 +23,7 @@ class DsSimpleLinkManager implements ServerLinkManager {
   }
 
   Responder getResponder(String dsId, NodeProvider nodeProvider,
-      [String sessionId = ""]) {
+      [String sessionId = "", bool trusted = false]) {
     return new Responder(nodeProvider);
   }
 
@@ -232,7 +232,8 @@ class DsHttpServer {
             token: tokenHash,
             nodeProvider: nodeProvider,
             enableTimeout: true,
-            onDisconnect: onLinkDisconnected
+            onDisconnect: onLinkDisconnected,
+            trusted:trusted
           );
 
           if (trusted) {
