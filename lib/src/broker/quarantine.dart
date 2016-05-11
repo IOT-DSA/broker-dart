@@ -1,12 +1,12 @@
 part of dsbroker.broker;
 
 
-class ApproveDslinkAction extends BrokerStaticNode {
+class AuthorizeDslinkAction extends BrokerStaticNode {
   
   List dsidList = [];
   List groupList = [];
   List params;
-  ApproveDslinkAction(String path, BrokerNodeProvider provider) : super(path, provider) {
+  AuthorizeDslinkAction(String path, BrokerNodeProvider provider) : super(path, provider) {
     params = [
       {
         "name": "DsId",
@@ -64,21 +64,23 @@ class ApproveDslinkAction extends BrokerStaticNode {
           name = params['Name'];
         }
         if (name != null && name != '') {
-          
           if (provider.quarantineNode.children.containsKey(name)) {
             return response..close(new DSError("invalidParameter", msg:"name already exists"));
           }
-          connPath = provider.downstreamNameSS + name;
-          provider._connPath2id[connPath] = dsId;
-          provider._id2connPath[dsId] = connPath;
+          
         }
         if (provider._links.containsKey(dsId)) {
           provider.removeLink(provider._links[dsId], dsId);
         }
-        if (connPath == null) {
+        if (name != null && name != '') {
+          connPath = provider.downstreamNameSS + name;
+          provider._connPath2id[connPath] = dsId;
+          provider._id2connPath[dsId] = connPath;
+        } else {
           provider._id2connPath.remove(dsId);
           connPath = provider.makeConnPath(dsId, true);
         }
+          
         if (group != null && group != '') {
           provider.getOrCreateNode(connPath, false).configs[r'$$group'] = group;
         }
