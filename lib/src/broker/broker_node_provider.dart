@@ -53,7 +53,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   AuthorizeDslinkAction approveDslinkAction;
   KickDslinkAction kickDslinkAction;
-
+  UpdateGroupAction updateGroupAction;
   List defaultPermission;
 
   BrokerNodeProvider({
@@ -125,6 +125,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     root.loadPermission(list);
     approveDslinkAction.updateGroups(list);
     upstream.crateActoin.updateGroups(list);
+    updateGroupAction.updateGroups(list);
   }
 
   static void fixPermissionList(List plist) {
@@ -212,6 +213,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       approveDslinkAction.updateGroups(defaultPermission);
     }
     kickDslinkAction = new KickDslinkAction('/sys/quarantine/de-authorize', this);
+    updateGroupAction = new UpdateGroupAction('/sys/updateGroup', this);
   }
 
   /// load a fixed profile map
@@ -414,6 +416,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       await connsFile.writeAsString(DsJson.encode(m));
     }
     kickDslinkAction.updateNames(names);
+    updateGroupAction.updateNames(names);
     return m;
   }
   void updateQuarantineIds() {
@@ -889,8 +892,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   void onLinkDisconnected(ServerLink link) {
     if (_links[link.dsId] == link) {
-      String connPath = makeConnPath(link.dsId);
-      if (connPath.startsWith('/sys/quarantine/')){
+      String connPath = _id2connPath[link.dsId];
+      if (connPath != null && connPath.startsWith('/sys/quarantine/')){
         _connPath2id.remove(connPath);
         if (_id2connPath[link.dsId] == connPath) {
           // it's also possible that the path is already moved to downstream

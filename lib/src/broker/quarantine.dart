@@ -143,7 +143,7 @@ class KickDslinkAction extends BrokerStaticNode {
 
         provider.connsNode.updateList(name);
         
-        DsTimer.timerOnceAfter( provider.saveConns, 3000);
+        DsTimer.timerOnceBefore( provider.saveConns, 300);
       }
       
     } else {
@@ -154,3 +154,76 @@ class KickDslinkAction extends BrokerStaticNode {
   }
 }
 
+
+class UpdateGroupAction extends BrokerStaticNode {
+  List params;
+  
+  UpdateGroupAction(String path, BrokerNodeProvider provider) : super(path, provider) {
+    configs[r"$invokable"] = "config";
+    params = [
+      {
+        "name": "Name",
+        "type": "enum"
+      },
+      {
+        "name": "Group",
+        "type": "group"
+      },
+    ];
+    configs[r'$params'] = params;
+  }
+  
+  void updateNames(List names) {
+    params[0] = {
+      "name": "Name",
+      "type": "enum[${names.join(',')}]"
+    };
+    updateList(r'$params');
+  }
+  void updateGroups(List defaultPermission) {
+    if (defaultPermission == null) {
+      return;
+    }
+    List groups = [];
+    for (List p in defaultPermission) {
+      groups.add(p[0]);
+    }
+    groups.sort();
+    params[1] = {
+      "name": "Group",
+      "type": "string",
+      "editor": "enum[${groups.join(',')}]"
+    };
+    updateList(r'$params');
+  }
+  
+  @override
+  InvokeResponse invoke(Map params, Responder responder,
+      InvokeResponse response, LocalNode parentNode,
+      [int maxPermission = Permission.CONFIG]) {
+    
+    if (params['Name'] is String) {
+      String name = params['Name'];
+      RemoteLinkNode node = provider.connsNode.children[name];
+      if (node != null) {
+        String group;
+        if (params['Group'] is String) {
+          group = params['Group'];
+        }
+        node.configs[r'$$group'] = group;
+        String fullId = provider._connPath2id[node.path];
+       
+        if (provider._links.containsKey(fullId)) {
+          provider.removeLink(provider._links[fullId], fullId);
+        }
+        
+        DsTimer.timerOnceBefore( provider.saveConns, 300);
+      }
+      
+    } else {
+      return response..close(DSError.INVALID_PARAMETER);
+    }
+
+    return response..close();
+  }
+}
