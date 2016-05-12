@@ -886,13 +886,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   void onLinkDisconnected(ServerLink link) {
     if (_links[link.dsId] == link) {
       String connPath = makeConnPath(link.dsId);
-<<<<<<< HEAD
-      if (connPath.startsWith('/quarantine/')){
-
-=======
       if (connPath.startsWith('/sys/quarantine/')){
-        
->>>>>>> f6f0872... move quarantine to /sys
         _connPath2id.remove(connPath);
         if (_id2connPath[link.dsId] == connPath) {
           // it's also possible that the path is already moved to downstream
