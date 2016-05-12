@@ -525,6 +525,13 @@ class UpstreamBrokerNode extends BrokerNode {
 
     BrokerNodeProvider p = provider;
     String upstreamId = "@upstream@$name";
+    
+    // initialize $$group value before get responder
+    String connPath = provider.makeConnPath(upstreamId);
+    if (connPath != null) {
+      RemoteLinkNode node = provider.getOrCreateNode(connPath, false);
+      node.configs[r'$$group'] = group;
+    }
     Requester overrideRequester = provider.getRequester(upstreamId);
     Responder overrideResponder = provider.getResponder(upstreamId, provider);
     PrivateKey pkey = loadBrokerPrivateKey();
@@ -550,7 +557,6 @@ class UpstreamBrokerNode extends BrokerNode {
       p.removeLink(link, "@upstream@$name", force: true);
       linkManager = p.addUpstreamLink(link, name);
     }
-    linkManager.rootNode.configs[r'$$group'] = group;
 
     enabledNode.updateValue(true);
     enabled = true;
