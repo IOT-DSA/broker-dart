@@ -80,7 +80,10 @@ class ClearConnsAction extends BrokerStaticNode {
 class RootNode extends BrokerNode {
   RootNode(String path, BrokerNodeProvider provider) : super(path, provider) {
     configs[r"$is"] = "dsa/broker";
-    configs[r"$uid"] = generateToken();
+
+    if (provider != null) {
+      configs[r"$uid"] = provider.uid;
+    }
   }
 
   bool _loaded = false;

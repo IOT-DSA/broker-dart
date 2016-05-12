@@ -31,6 +31,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   BrokerNode quarantineNode;
   BrokerNode tokens;
 
+  String uid;
+
   BrokerStatsNode stats;
 
   Map rootStructure = {'users': {}, 'sys': {'tokens': {}}, 'upstream': {}, 'quarantine':{}};
@@ -65,6 +67,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (storage == null) {
       storage = new SimpleStorageManager("storage");
     }
+
+    uid = generateToken();
 
     this.storage = storage;
 
