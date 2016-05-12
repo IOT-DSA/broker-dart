@@ -35,7 +35,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   BrokerStatsNode stats;
 
-  Map rootStructure = {'users': {}, 'sys': {'tokens': {}}, 'upstream': {}, 'quarantine':{}};
+  Map rootStructure = {'users': {}, 'sys': {'tokens': {},'quarantine':{}}, 'upstream': {}};
 
 
   bool shouldSaveFiles = true;
@@ -103,7 +103,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     usersNode = nodes['/users'];
     dataNode = nodes['/data'];
     sysNode = nodes['/sys'];
-    quarantineNode = nodes['/quarantine'];
+    quarantineNode = nodes['/sys/quarantine'];
     upstreamDataNode = nodes['/upstream'];
     tokens = nodes['/sys/tokens'];
     new BrokerQueryNode("/sys/query", this);
@@ -205,15 +205,13 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     stats = new BrokerStatsNode("/sys/stats", this);
 
     stats.init();
+    
+    approveDslinkAction = new AuthorizeDslinkAction('/sys/quarantine/authorize', this);
 
-
-    new BrokerStaticNode("/sys/quarantine", this);
-
-    approveDslinkAction = new AuthorizeDslinkAction('/quarantine/authorize', this);
     if (defaultPermission != null) {
       approveDslinkAction.updateGroups(defaultPermission);
     }
-    kickDslinkAction = new KickDslinkAction('/quarantine/de-authorize', this);
+    kickDslinkAction = new KickDslinkAction('/sys/quarantine/de-authorize', this);
   }
 
   /// load a fixed profile map
@@ -598,11 +596,11 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 //        }
       }
       node = conn.getOrCreateNode(path, false);
-    } else if (path.startsWith('/quarantine/')) {
+    } else if (path.startsWith('/sys/quarantine/')) {
       List paths = path.split('/');
-      if (paths.length > 2) {
-        String connName = paths[2];
-        String connPath = '/quarantine/$connName';
+      if (paths.length > 3) {
+        String connName = paths[3];
+        String connPath = '/sys/quarantine/$connName';
         RemoteLinkManager conn = conns[connPath];
         if (conn == null) {
           // TODO conn = new RemoteLinkManager('$downstreamNameSS$connName', connRootNodeData);
@@ -693,7 +691,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 //      if (fullId.contains(':')) {
 //        // uname:dsId
 //        List<String> u_id = fullId.split(':');
-//        folderPath = '/quarantine/${u_id[0]}/';
+//        folderPath = '/sys/quarantine/${u_id[0]}/';
 //        dsId = u_id[1];
 //      }
 
@@ -718,7 +716,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       return connPath;
     } else if (enabledQuarantine) {
       String connPath;
-      String folderPath = '/quarantine/';
+      String folderPath = '/sys/quarantine/';
       connPath = '$folderPath$fullId';
       if (!_connPath2id.containsKey(connPath)) {
         _connPath2id[connPath] = fullId;
@@ -881,7 +879,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         parentNode.updateList(connName);
         if (conn.path.startsWith(downstreamNameSS)) {
           DsTimer.timerOnceBefore(saveConns, 300);
-        } else if (conn.path.startsWith('/quarantine/')) {
+        } else if (conn.path.startsWith('/sys/quarantine/')) {
           DsTimer.timerOnceBefore(updateQuarantineIds, 300);
         }
       }
@@ -892,8 +890,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   void onLinkDisconnected(ServerLink link) {
     if (_links[link.dsId] == link) {
       String connPath = makeConnPath(link.dsId);
-      if (connPath.startsWith('/quarantine/')){
-
+      if (connPath.startsWith('/sys/quarantine/')){
         _connPath2id.remove(connPath);
         if (_id2connPath[link.dsId] == connPath) {
           // it's also possible that the path is already moved to downstream
@@ -999,7 +996,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (connPath == null) return null;
     RemoteLinkNode node = getOrCreateNode(connPath, false);
     Responder rslt = node._linkManager.getResponder(nodeProvider, dsId, sessionId);
-    if (connPath.startsWith('/quarantine/')) {
+    if (connPath.startsWith('/sys/quarantine/')) {
       rslt.disabled = true;
       DsTimer.timerOnceBefore(updateQuarantineIds, 300);
     } else if (node.configs[r'$$group'] is String) {
