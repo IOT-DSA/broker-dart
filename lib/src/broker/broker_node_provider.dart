@@ -904,11 +904,11 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         quarantineNode.children.remove(link.dsId);
         conns[connPath].inTree = false;
         
-        _links.remove(link.dsId);
         // remove server link if it's not connected
 //        _links.remove(link.dsId);
         quarantineNode.updateList(link.dsId);
         DsTimer.timerOnceBefore(updateQuarantineIds, 300);
+        _links.remove(link.dsId);
       }
     }
   }
@@ -924,10 +924,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         // check if it's a quaratine link
         // run this before disconnect event really happens
         onLinkDisconnected(link);
-      } else {
-        _links.remove(id);
       }
       link.close();
+      _links.remove(id);
       
       if (link is HttpServerLink && link.session != '') {
         // fully destroy user link
