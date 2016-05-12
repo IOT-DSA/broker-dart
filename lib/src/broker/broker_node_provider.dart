@@ -443,7 +443,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         connsNode.updateList(name);
       }
     }
-    DsTimer.timerOnceAfter(saveConns, 1000);
+    DsTimer.timerOnceBefore(saveConns, 300);
   }
 
   void clearUpstreamNodes() {
@@ -469,7 +469,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         upstreamDataNode.updateList(name);
       }
     }
-    DsTimer.timerOnceAfter(saveConns, 1000);
+    DsTimer.timerOnceBefore(saveConns, 300);
   }
 
   /// add a node to the tree
@@ -606,9 +606,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
           conns[connPath] = conn;
           nodes[connPath] = conn.rootNode;
           conn.rootNode.parentNode = quarantineNode;
+          DsTimer.timerOnceBefore(updateQuarantineIds, 300);
         }
         node = conn.getOrCreateNode(path, false);
-        DsTimer.timerOnceAfter(updateQuarantineIds, 1000);
       } else {
         node = new BrokerNode(path, this);
       }
@@ -710,7 +710,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         }
       }
 
-      DsTimer.timerOnceBefore(saveConns, 3000);
+      DsTimer.timerOnceBefore(saveConns, 300);
       return connPath;
     } else if (enabledQuarantine) {
       String connPath;
@@ -766,7 +766,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
           Node node = getOrCreateNode(connPath, false);
           node.configs[r'$$group'] = tokenNode.group;
         }
-        DsTimer.timerOnceBefore(saveConns, 3000);
+        DsTimer.timerOnceBefore(saveConns, 300);
         return connPath;
       }
     }
@@ -813,7 +813,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       conn.rootNode.parentNode = parentNode;
       conn.inTree = true;
       parentNode.updateList(connName);
-      DsTimer.timerOnceAfter(saveConns, 1000);
+      DsTimer.timerOnceBefore(saveConns, 300);
     }
     return conn;
   }
@@ -875,7 +875,11 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         conn.rootNode.parentNode = parentNode;
         conn.inTree = true;
         parentNode.updateList(connName);
-        DsTimer.timerOnceAfter(saveConns, 1000);
+        if (conn.path.startsWith(downstreamNameSS)) {
+          DsTimer.timerOnceBefore(saveConns, 300);
+        } else if (conn.path.startsWith('/quarantine/')) {
+          DsTimer.timerOnceBefore(updateQuarantineIds, 300);
+        }
       }
     }
     return _links[str];
@@ -898,7 +902,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         // remove server link if it's not connected
 //        _links.remove(link.dsId);
         quarantineNode.updateList(link.dsId);
-        DsTimer.timerOnceAfter(updateQuarantineIds, 1000);
+        DsTimer.timerOnceBefore(updateQuarantineIds, 300);
       }
     }
   }
@@ -908,7 +912,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       // TODO: any extra work needed in responder or requester?
       // link.responder.destroy();
       // link.requester.destroy();
-  
+      
+      
       if (link is ServerLink) {
         // check if it's a quaratine link
         // run this before disconnect event really happens
@@ -954,7 +959,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         _id2connPath.remove(dsId);
         link.close();
         _links.remove(dsId);
-        DsTimer.timerOnceAfter(saveConns, 1000);
+        DsTimer.timerOnceBefore(saveConns, 300);
       }
 
       String name = node.path.split('/').last;
@@ -992,7 +997,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     Responder rslt = node._linkManager.getResponder(nodeProvider, dsId, sessionId);
     if (connPath.startsWith('/quarantine/')) {
       rslt.disabled = true;
-      DsTimer.timerOnceAfter(updateQuarantineIds, 1000);
+      DsTimer.timerOnceBefore(updateQuarantineIds, 300);
     } else if (node.configs[r'$$group'] is String) {
       List groups = (node.configs[r'$$group'] as String).split(',');
       rslt.updateGroups(groups);
