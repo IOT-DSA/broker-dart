@@ -78,20 +78,9 @@ class ClearConnsAction extends BrokerStaticNode {
 }
 
 class RootNode extends BrokerNode {
-  IValueStorageBucket bucket;
-  IValueStorage uidStorage;
-
   RootNode(String path, BrokerNodeProvider provider) : super(path, provider) {
     configs[r"$is"] = "dsa/broker";
-    bucket = provider.storage.getOrCreateValueStorageBucket("ids");
-    uidStorage = bucket.getValueStorage("broker");
-    uidStorage.getValueAsync().then((id) {
-      if (id == null) {
-        id = generateToken();
-        uidStorage.setValue(id);
-      }
-      configs[r"$uid"] = id;
-    });
+    configs[r"$uid"] = generateToken();
   }
 
   bool _loaded = false;
@@ -123,7 +112,7 @@ class RootNode extends BrokerNode {
 }
 
 class UpstreamNode extends BrokerStaticNode {
-  
+
   CreateUpstreamBrokerNode crateActoin;
   UpstreamNode(String path, BrokerNodeProvider provider)
   : super(path, provider) {
@@ -295,7 +284,7 @@ class CreateUpstreamBrokerNode extends BrokerNode {
     };
     updateList(r'$params');
   }
-  
+
   @override
   InvokeResponse invoke(
       Map params, Responder responder, InvokeResponse response, Node parentNode,
@@ -504,7 +493,7 @@ class UpstreamBrokerNode extends BrokerNode {
     groupNode.configs[r"$type"] = "string";
     groupNode.configs[r"$writable"] = "write";
     groupNode.updateValue(group);
-       
+
     new Future(() {
       var drn = new DeleteUpstreamConnectionNode(
           "/sys/upstream/${name}/delete", name, provider);
@@ -515,7 +504,7 @@ class UpstreamBrokerNode extends BrokerNode {
       provider.setNode(brokerNameNode.path, brokerNameNode);
       provider.setNode(tokenNode.path, tokenNode);
       provider.setNode(groupNode.path, groupNode);
-      
+
       addChild("delete", drn);
       addChild("enabled", enabledNode);
       addChild("url", urlNode);
@@ -559,7 +548,7 @@ class UpstreamBrokerNode extends BrokerNode {
       linkManager = p.addUpstreamLink(link, name);
     }
     linkManager.rootNode.configs[r'$$group'] = group;
-    
+
     enabledNode.updateValue(true);
     enabled = true;
     link.onRequesterReady.then((Requester requester) {

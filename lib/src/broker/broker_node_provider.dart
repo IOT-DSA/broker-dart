@@ -51,9 +51,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   AuthorizeDslinkAction approveDslinkAction;
   KickDslinkAction kickDslinkAction;
-  
+
   List defaultPermission;
-  
+
   BrokerNodeProvider({
     this.enabledQuarantine: false,
     this.acceptAllConns: true,
@@ -89,10 +89,10 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     rootStructure[downstreamName] = {};
 
     root.load(rootStructure);
-    
+
     defsNode = new BrokerHiddenNode('/defs', this);
     root.addChild('defs', defsNode);
-    
+
     connsNode = nodes[downstreamNameS];
     connsNode.configs[r"$downstream"] = true;
     root.configs[r"$downstream"] = downstreamNameS;
@@ -113,16 +113,16 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     defsNode.loadPermission([['default', 'read']]);
     sysNode.loadPermission([[':config', 'config'],['default', 'none']]);
     quarantineNode.loadPermission([[':config', 'config'],['default', 'none']]);
-    
+
     permissions.root = root;
   }
-  
+
   void updateDefaultGroups(List list) {
     root.loadPermission(list);
     approveDslinkAction.updateGroups(list);
     upstream.crateActoin.updateGroups(list);
   }
-  
+
   static void fixPermissionList(List plist) {
     Map builtinpermissions = {
       ':trustedLink':'config',
@@ -131,7 +131,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       ':write':'write',
       ':read':'read',
     };
-    Map builtincheck = {};
+
     for (List l in plist) {
       builtinpermissions.forEach((String g, String p){
         if (l[0] == g){
@@ -139,7 +139,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         }
       });
     }
-    
+
     builtinpermissions.forEach((String g, String p){
       if (p != null){
         plist.insert(0, [g, p]);
@@ -195,16 +195,16 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
     throughput.initNodes(this);
     upstream = new UpstreamNode("/sys/upstream", this);
-    
+
     traceNode.init();
 
     stats = new BrokerStatsNode("/sys/stats", this);
 
     stats.init();
-    
-    
+
+
     new BrokerStaticNode("/sys/quarantine", this);
-    
+
     approveDslinkAction = new AuthorizeDslinkAction('/quarantine/authorize', this);
     if (defaultPermission != null) {
       approveDslinkAction.updateGroups(defaultPermission);
@@ -889,14 +889,14 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (_links[link.dsId] == link) {
       String connPath = makeConnPath(link.dsId);
       if (connPath.startsWith('/quarantine/')){
-        
+
         _connPath2id.remove(connPath);
         if (_id2connPath[link.dsId] == connPath) {
           // it's also possible that the path is already moved to downstream
           // in that case, don't remove, wait for it to connect
           _id2connPath.remove(link.dsId);
         }
-        
+
         quarantineNode.children.remove(link.dsId);
         conns[connPath].inTree = false;
         // remove server link if it's not connected
@@ -906,20 +906,20 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       }
     }
   }
-  
+
   void removeLink(BaseLink link, String id, {bool force: false}) {
     if (_links[id] == link || force) {
       // TODO: any extra work needed in responder or requester?
       // link.responder.destroy();
       // link.requester.destroy();
-      
-      
+
+
       if (link is ServerLink) {
         // check if it's a quaratine link
         // run this before disconnect event really happens
         onLinkDisconnected(link);
       }
-      
+
       link.close();
       _links.remove(id);
       if (link is HttpServerLink && link.session != '') {
@@ -941,7 +941,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
             }
           }
         }
-        
+
       }
     }
   }
