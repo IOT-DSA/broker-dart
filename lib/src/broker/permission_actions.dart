@@ -11,7 +11,8 @@ class UpdatePermissionAction extends BrokerStaticNode {
       },
       {
          'name': 'Permissions',
-         'type': 'dynamic'
+         'type': 'dynamic',
+         'editor': 'textarea'
       }
     ];
   }
@@ -25,6 +26,12 @@ class UpdatePermissionAction extends BrokerStaticNode {
       List permissions;
       if (params['Permissions'] is List) {
         permissions = params['Permissions'];
+      } else if (params['Permissions'] is String) {
+        try {
+          permissions = JSON.decode(params['Permissions']);
+        } catch(err) {
+          return response..close(DSError.INVALID_PARAMETER);
+        }
       }
       String path = params['Path'];
       int permission = provider.permissions.getPermission(path, responder);
@@ -39,8 +46,8 @@ class UpdatePermissionAction extends BrokerStaticNode {
                response.close(DSError.PERMISSION_DENIED);
              }
           } else if (node is RemoteLinkNode) {
-             var permissionChild = node._linkManager.rootNode.getPermissionChildWithPath(node.remotePath, false);
-             if (permissionChild) {
+            BrokerNodePermission permissionChild = node._linkManager.rootNode.getPermissionChildWithPath(node.remotePath, false);
+             if (permissionChild != null) {
                permissionChild.loadPermission(null);
                node._linkManager.rootNode.persist();
              }
