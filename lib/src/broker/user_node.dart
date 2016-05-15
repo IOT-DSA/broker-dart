@@ -2,10 +2,12 @@ part of dsbroker.broker;
 
 class UserNode extends BrokerNode {
   final String username;
-  UserNode(String path, BrokerNodeProvider provider, this.username) : super(path, provider) {
+  UserNode(String path, BrokerNodeProvider provider, this.username) :
+      super(path, provider) {
     configs[r'$is'] = 'broker/userNode';
     profile = provider.getOrCreateNode('/defs/profile/broker/userNode', false);
   }
+
   BrokerNode parent;
   bool _loaded = false;
   /// Load this node from the provided map as [m].
@@ -32,7 +34,7 @@ class UserNode extends BrokerNode {
         if (node is UserNode) {
           node.parent = this;
         }
-        
+
         children[key] = node;
         if (node is UserNode) {
           node.load(value);
@@ -72,18 +74,28 @@ InvokeResponse addUserChildNode(Map params, Responder responder,
       return response
         ..close(new DSError('invalidParameter', msg: 'node already exist'));
     }
-    UserNode node = responder.nodeProvider.getOrCreateNode('${parentNode.path}/$name', false);
+
+    UserNode node = responder.nodeProvider.getOrCreateNode(
+      '${parentNode.path}/$name',
+      false
+    );
     node.parent = parentNode;
     parentNode.children[name] = node;
     parentNode.updateList(name);
-    DsTimer.timerOnceBefore((responder.nodeProvider as BrokerNodeProvider).saveUsrNodes, 1000);
 
+    DsTimer.timerOnceBefore(
+      (responder.nodeProvider as BrokerNodeProvider).saveUsrNodes,
+      1000
+    );
   }
   return response..close(DSError.INVALID_PARAMETER);
 }
 
-InvokeResponse addUserLink(Map params, Responder responder, InvokeResponse response,
-    LocalNode parentNode) {
+InvokeResponse addUserLink(
+  Map params,
+  Responder responder,
+  InvokeResponse response,
+  LocalNode parentNode) {
   Object name = params['Name'];
   Object dsId = params['Id'];
   if (parentNode is UserNode &&
@@ -118,13 +130,19 @@ InvokeResponse addUserLink(Map params, Responder responder, InvokeResponse respo
     node.configs[r'$$dsId'] = dsId;
     parentNode.children[name] = node;
     parentNode.updateList(name);
-    DsTimer.timerOnceBefore((responder.nodeProvider as BrokerNodeProvider).saveUsrNodes, 1000);
+    DsTimer.timerOnceBefore(
+      (responder.nodeProvider as BrokerNodeProvider).saveUsrNodes,
+      1000
+    );
   }
   return response..close(DSError.INVALID_PARAMETER);
 }
 
-InvokeResponse removeUserNode(Map params, Responder responder, InvokeResponse response,
-    LocalNode parentNode) {
+InvokeResponse removeUserNode(
+  Map params,
+  Responder responder,
+  InvokeResponse response,
+  LocalNode parentNode) {
   Object recursive = params['Recursive'];
   if (parentNode is UserNode &&
     parentNode is! UserRootNode &&
@@ -166,9 +184,16 @@ void removeUserNodeRecursive(UserNode node, String name) {
   node.clearValue();
 }
 
-Map userNodeFunctions = {
+final Map<String, dynamic> _userNodeFunctions = <String, dynamic>{
   "broker": {
-    "userNode": {"addChild": addUserChildNode, "addLink": addUserLink, "removeNode": removeUserNode},
-    "userRoot": {"addChild": addUserChildNode, "addLink": addUserLink,}
+    "userNode": {
+      "addChild": addUserChildNode,
+      "addLink": addUserLink,
+      "removeNode": removeUserNode
+    },
+    "userRoot": {
+      "addChild": addUserChildNode,
+      "addLink": addUserLink
+    }
   }
 };

@@ -249,7 +249,7 @@ class TokenNode extends BrokerNode {
   }
 }
 
-InvokeResponse deleteTokenNode(Map params, Responder responder,
+InvokeResponse _deleteTokenNode(Map params, Responder responder,
     InvokeResponse response, LocalNode parentNode) {
   if (parentNode is TokenNode) {
     parentNode.delete();
@@ -258,7 +258,7 @@ InvokeResponse deleteTokenNode(Map params, Responder responder,
   return response..close(DSError.INVALID_PARAMETER);
 }
 
-InvokeResponse addTokenNode(Map params, Responder responder,
+InvokeResponse _addTokenNode(Map params, Responder responder,
     InvokeResponse response, LocalNode parentNode) {
   if (params == null) {
     params = {};
@@ -290,9 +290,13 @@ InvokeResponse addTokenNode(Map params, Responder responder,
   return response..close(DSError.INVALID_PARAMETER);
 }
 
-Map tokenNodeFunctions = {
+final Map<String, dynamic> _tokenNodeFunctions = <String, dynamic>{
   "broker": {
-    "token": {"delete": deleteTokenNode},
-    "tokenGroup": {"add": addTokenNode}
+    "token": {
+      "delete": _deleteTokenNode
+    },
+    "tokenGroup": {
+      "add": _addTokenNode
+    }
   }
 };

@@ -43,6 +43,7 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
         pchildren[name] = new VirtualNodePermission()..load(value);
       }
     });
+
     if (m['?permissions'] is List) {
       loadPermission(m['?permissions']);
     }
@@ -81,7 +82,7 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
   BrokerNodePermission getPermissionChild(String str) {
     return pchildren[str];
   }
-  
+
   BrokerNodePermission getPermissionChildWithPath(String path, bool create) {
     if (path == '/') {
       return this;
@@ -125,7 +126,7 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
     }
     return m;
   }
-  
+
   bool persist() {
     DsTimer.timerOnceAfter(provider.saveConns, 3000);
     return true;

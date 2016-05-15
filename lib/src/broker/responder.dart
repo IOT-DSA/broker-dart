@@ -1,16 +1,21 @@
 part of dsbroker.broker;
 
 class BrokerResponder extends Responder {
-  BrokerResponder(NodeProvider nodeProvider, String reqId) : super(nodeProvider, reqId);
+  BrokerResponder(NodeProvider nodeProvider, String reqId) :
+      super(nodeProvider, reqId);
 
   void invoke(Map m) {
     Path path = Path.getValidNodePath(m['path']);
     if (path != null && path.isAbsolute) {
       int rid = m['rid'];
-      LocalNode parentNode = nodeProvider.getOrCreateNode(path.parentPath, false);
+      LocalNode parentNode = nodeProvider.getOrCreateNode(
+        path.parentPath,
+        false
+      );
       LocalNode actionNode;
       bool doublePermissionCheck = false;
-      if (path.name == 'getHistory' && parentNode.getOverideAttributes('@@getHistory') is Map) {
+      if (path.name == 'getHistory' &&
+        parentNode.getOverideAttributes('@@getHistory') is Map) {
         // alias node for getHistory action
         // TODO, should we make this a generic way of alias node
         Map m  = parentNode.getOverideAttributes('@@getHistory');
@@ -29,14 +34,20 @@ class BrokerResponder extends Responder {
         closeResponse(m['rid'], error: DSError.PERMISSION_DENIED);
         return;
       }
-      int permission = nodeProvider.permissions.getPermission(path.path, this);
+      int permission = nodeProvider.permissions.getPermission(
+        path.path,
+        this
+      );
       int maxPermit = Permission.parse(m['permit']);
       if (maxPermit < permission) {
         permission = maxPermit;
       }
 
       if (doublePermissionCheck) {
-        int permission2 = nodeProvider.permissions.getPermission(actionNode.path, this);
+        int permission2 = nodeProvider.permissions.getPermission(
+          actionNode.path,
+          this
+        );
         if (permission2 < permission2) {
           permission = permission2;
         }
@@ -46,7 +57,15 @@ class BrokerResponder extends Responder {
         actionNode.invoke(
           m['params'],
           this,
-          addResponse(new InvokeResponse(this, rid, parentNode, actionNode, path.name)),
+          addResponse(
+            new InvokeResponse(
+              this,
+              rid,
+              parentNode,
+              actionNode,
+              path.name
+            )
+          ),
           parentNode,
           permission
         );

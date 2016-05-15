@@ -1,15 +1,15 @@
 part of dsbroker.broker;
 
 class UpstreamNode extends BrokerStaticNode {
+  CreateUpstreamBrokerNode createAction;
 
-  CreateUpstreamBrokerNode crateActoin;
   UpstreamNode(String path, BrokerNodeProvider provider)
   : super(path, provider) {
     new Future(() {
-      crateActoin = new CreateUpstreamBrokerNode(
+      createAction = new CreateUpstreamBrokerNode(
           "/sys/upstream/add_connection", provider);
-      provider.setNode("/sys/upstream/add_connection", crateActoin);
-      crateActoin.updateGroups(provider.defaultPermission);
+      provider.setNode("/sys/upstream/add_connection", createAction);
+      createAction.updateGroups(provider.defaultPermission);
     });
   }
 
@@ -411,7 +411,7 @@ class UpstreamBrokerNode extends BrokerNode {
 
     BrokerNodeProvider p = provider;
     String upstreamId = "@upstream@$name";
-    
+
     // initialize $$group value before get responder
     String connPath = provider.makeConnPath(upstreamId);
     if (connPath != null) {

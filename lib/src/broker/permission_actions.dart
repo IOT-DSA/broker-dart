@@ -1,18 +1,19 @@
 part of dsbroker.broker;
 
 class UpdatePermissionAction extends BrokerStaticNode {
-  UpdatePermissionAction(String path, BrokerNodeProvider provider) : super(path, provider) {
+  UpdatePermissionAction(String path, BrokerNodeProvider provider) :
+      super(path, provider) {
     configs[r"$name"] = "Update Permissions";
     configs[r"$invokable"] = "read";
-    configs[r'$params'] = [
+    configs[r"$params"] = [
       {
-        'name': 'Path',
-        'type': 'string'
+        "name": "Path",
+        "type": "string"
       },
       {
-         'name': 'Permissions',
-         'type': 'dynamic',
-         'editor': 'textarea'
+         "name": "Permissions",
+         "type": "dynamic",
+         "editor": "textarea"
       }
     ];
   }
@@ -22,18 +23,18 @@ class UpdatePermissionAction extends BrokerStaticNode {
       InvokeResponse response, LocalNode parentNode,
       [int maxPermission = Permission.CONFIG]) {
     if (maxPermission == Permission.CONFIG && params != null
-        && params['Path'] is String) {
+        && params["Path"] is String) {
       List permissions;
-      if (params['Permissions'] is List) {
-        permissions = params['Permissions'];
-      } else if (params['Permissions'] is String) {
+      if (params["Permissions"] is List) {
+        permissions = params["Permissions"];
+      } else if (params["Permissions"] is String) {
         try {
-          permissions = JSON.decode(params['Permissions']);
+          permissions = JSON.decode(params["Permissions"]);
         } catch(err) {
           return response..close(DSError.INVALID_PARAMETER);
         }
       }
-      String path = params['Path'];
+      String path = params["Path"];
       int permission = provider.permissions.getPermission(path, responder);
       if (permission == Permission.CONFIG) {
 
@@ -46,7 +47,10 @@ class UpdatePermissionAction extends BrokerStaticNode {
                response.close(DSError.PERMISSION_DENIED);
              }
           } else if (node is RemoteLinkNode) {
-            BrokerNodePermission permissionChild = node._linkManager.rootNode.getPermissionChildWithPath(node.remotePath, false);
+            BrokerNodePermission permissionChild = node
+              ._linkManager
+              .rootNode
+              .getPermissionChildWithPath(node.remotePath, false);
              if (permissionChild != null) {
                permissionChild.loadPermission(null);
                node._linkManager.rootNode.persist();
@@ -61,7 +65,10 @@ class UpdatePermissionAction extends BrokerStaticNode {
               response.close(DSError.PERMISSION_DENIED);
             }
           } else if (node is RemoteLinkNode) {
-            BrokerNodePermission permissionChild = node._linkManager.rootNode.getPermissionChildWithPath(node.remotePath, true);
+            BrokerNodePermission permissionChild = node
+              ._linkManager
+              .rootNode
+              .getPermissionChildWithPath(node.remotePath, true);
             if (permissionChild != null) {
               permissionChild.loadPermission(permissions);
               node._linkManager.rootNode.persist();
@@ -74,9 +81,10 @@ class UpdatePermissionAction extends BrokerStaticNode {
     return response..close();
   }
 
+  @override
   Map getSimpleMap() {
-    Map rslt = super.getSimpleMap();
-    rslt[r'$hidden'] = true;
+    var rslt = super.getSimpleMap();
+    rslt[r"$hidden"] = true;
     return rslt;
   }
 }

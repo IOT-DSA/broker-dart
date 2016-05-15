@@ -1,12 +1,15 @@
 part of dsbroker.broker;
 
 
-class AuthorizeDslinkAction extends BrokerStaticNode {
-  
+class AuthorizeDSLinkAction extends BrokerStaticNode {
   List dsidList = [];
   List groupList = [];
   List params;
-  AuthorizeDslinkAction(String path, BrokerNodeProvider provider) : super(path, provider) {
+
+  AuthorizeDSLinkAction(String path, BrokerNodeProvider provider) :
+      super(path, provider) {
+    configs[r"$name"] = "Authorize";
+
     params = [
       {
         "name": "DsId",
@@ -19,12 +22,12 @@ class AuthorizeDslinkAction extends BrokerStaticNode {
       {
         "name": "Name",
         "type": "string"
-      },
+      }
     ];
     configs[r"$invokable"] = "config";
-    configs[r'$params'] = params;
+    configs[r"$params"] = params;
   }
-  
+
   void updateGroups(List defaultPermission) {
     if (defaultPermission == null) {
       return;
@@ -41,7 +44,7 @@ class AuthorizeDslinkAction extends BrokerStaticNode {
     };
     updateList(r'$params');
   }
-  
+
   void updateDsId(List dsids) {
     dsids.sort();
     params[0] = {
@@ -50,12 +53,12 @@ class AuthorizeDslinkAction extends BrokerStaticNode {
     };
     updateList(r'$params');
   }
-  
+
   @override
   InvokeResponse invoke(Map params, Responder responder,
       InvokeResponse response, LocalNode parentNode,
       [int maxPermission = Permission.CONFIG]) {
-    
+
     if (params['DsId'] is String) {
       String dsId = params['DsId'];
       RemoteLinkNode node = provider.quarantineNode.children[dsId];
@@ -71,9 +74,14 @@ class AuthorizeDslinkAction extends BrokerStaticNode {
         }
         if (name != null && name != '') {
           if (provider.quarantineNode.children.containsKey(name)) {
-            return response..close(new DSError("invalidParameter", msg:"name already exists"));
+            return response..close(
+              new DSError(
+                "invalidParameter",
+                msg: "name already exists"
+              )
+            );
           }
-          
+
         }
         if (provider._links.containsKey(dsId)) {
           provider.removeLink(provider._links[dsId], dsId);
@@ -86,7 +94,7 @@ class AuthorizeDslinkAction extends BrokerStaticNode {
           provider._id2connPath.remove(dsId);
           connPath = provider.makeConnPath(dsId, true);
         }
-          
+
         if (group != null && group != '') {
           provider.getOrCreateNode(connPath, false).configs[r'$$group'] = group;
         }
@@ -94,15 +102,17 @@ class AuthorizeDslinkAction extends BrokerStaticNode {
     } else {
       return response..close(DSError.INVALID_PARAMETER);
     }
-    
+
     return response..close();
   }
 }
 
-class KickDslinkAction extends BrokerStaticNode {
+class KickDSLinkAction extends BrokerStaticNode {
   List params;
-  
-  KickDslinkAction(String path, BrokerNodeProvider provider) : super(path, provider) {
+
+  KickDSLinkAction(String path, BrokerNodeProvider provider) :
+      super(path, provider) {
+    configs[r"$name"] = "Deauthorize";
     configs[r"$invokable"] = "config";
     params = [
       {
@@ -112,7 +122,7 @@ class KickDslinkAction extends BrokerStaticNode {
     ];
     configs[r'$params'] = params;
   }
-  
+
   void updateNames(List names) {
     params[0] = {
       "name": "Name",
@@ -120,19 +130,18 @@ class KickDslinkAction extends BrokerStaticNode {
     };
     updateList(r'$params');
   }
-  
+
   @override
   InvokeResponse invoke(Map params, Responder responder,
       InvokeResponse response, LocalNode parentNode,
       [int maxPermission = Permission.CONFIG]) {
-    
     if (params['Name'] is String) {
       String name = params['Name'];
       RemoteLinkNode node = provider.connsNode.children[name];
       if (node != null) {
         RemoteLinkManager manager = node._linkManager;
         String fullId = provider._connPath2id[manager.path];
-       
+
         if (provider._links.containsKey(fullId)) {
           provider.removeLink(provider._links[fullId], fullId);
         }
@@ -142,10 +151,10 @@ class KickDslinkAction extends BrokerStaticNode {
         manager.inTree = false;
 
         provider.connsNode.updateList(name);
-        
-        DsTimer.timerOnceBefore( provider.saveConns, 300);
+
+        DsTimer.timerOnceBefore(provider.saveConns, 300);
       }
-      
+
     } else {
       return response..close(DSError.INVALID_PARAMETER);
     }
@@ -154,11 +163,12 @@ class KickDslinkAction extends BrokerStaticNode {
   }
 }
 
-
 class UpdateGroupAction extends BrokerStaticNode {
   List params;
-  
-  UpdateGroupAction(String path, BrokerNodeProvider provider) : super(path, provider) {
+
+  UpdateGroupAction(String path, BrokerNodeProvider provider) :
+      super(path, provider) {
+    configs[r"$name"] = "Update Permission Group";
     configs[r"$invokable"] = "config";
     params = [
       {
@@ -170,9 +180,9 @@ class UpdateGroupAction extends BrokerStaticNode {
         "type": "group"
       },
     ];
-    configs[r'$params'] = params;
+    configs[r"$params"] = params;
   }
-  
+
   void updateNames(List names) {
     params[0] = {
       "name": "Name",
@@ -180,6 +190,7 @@ class UpdateGroupAction extends BrokerStaticNode {
     };
     updateList(r'$params');
   }
+
   void updateGroups(List defaultPermission) {
     if (defaultPermission == null) {
       return;
@@ -196,12 +207,12 @@ class UpdateGroupAction extends BrokerStaticNode {
     };
     updateList(r'$params');
   }
-  
+
   @override
   InvokeResponse invoke(Map params, Responder responder,
       InvokeResponse response, LocalNode parentNode,
       [int maxPermission = Permission.CONFIG]) {
-    
+
     if (params['Name'] is String) {
       String name = params['Name'];
       RemoteLinkNode node = provider.connsNode.children[name];
@@ -212,14 +223,14 @@ class UpdateGroupAction extends BrokerStaticNode {
         }
         node.configs[r'$$group'] = group;
         String fullId = provider._connPath2id[node.path];
-       
+
         if (provider._links.containsKey(fullId)) {
           provider.removeLink(provider._links[fullId], fullId);
         }
-        
+
         DsTimer.timerOnceBefore( provider.saveConns, 300);
       }
-      
+
     } else {
       return response..close(DSError.INVALID_PARAMETER);
     }

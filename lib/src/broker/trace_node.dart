@@ -66,8 +66,18 @@ class _BrokerTraceResponderListener {
   void add(InvokeResponse response) {
     responses.add(response);
     response.onClose = remove;
-    response.updateStream(cachedSubscription.values.map((trace)=>trace.rowData).toList());
-    response.updateStream(cachedResponses.values.map((trace)=>trace.rowData).toList());
+    response.updateStream(
+      cachedSubscription
+        .values
+        .map((trace) => trace.rowData)
+        .toList()
+    );
+
+    response.updateStream(cachedResponses
+      .values
+      .map((trace) => trace.rowData)
+      .toList()
+    );
   }
 
   void remove(InvokeResponse response) {
@@ -89,7 +99,10 @@ class BrokerTraceRequesterNode extends BrokerNode {
         "type": "string",
         "placeholder": "full path to the requester dslink"
       },
-      {"name": "sessionId", "type": "string"}
+      {
+        "name": "sessionId",
+        "type": "string"
+      }
     ];
     configs[r"$columns"] = [
       {"name": "path", "type": "string"},
@@ -112,7 +125,8 @@ class BrokerTraceRequesterNode extends BrokerNode {
     if (sessionId == null) sessionId = "";
     Node node = provider.getOrCreateNode(path, false);
     if (path is String && sessionId is String && node is RemoteLinkRootNode) {
-      if (node._linkManager.responders != null && node._linkManager.responders.containsKey(sessionId)) {
+      if (node._linkManager.responders != null &&
+        node._linkManager.responders.containsKey(sessionId)) {
         if (!_listeners.containsKey(path)) {
           _listeners[path] = new _BrokerTraceResponderListener(
               path, sessionId, this, node._linkManager.responders[sessionId]);

@@ -6,14 +6,14 @@ class BrokerQueryNode extends BrokerStaticNode {
   BrokerQueryNode(String path, BrokerNodeProvider provider)
     : super(path, provider) {
     _manager = new BrokerQueryManager(provider);
-    configs[r'$name'] = 'Query';
-    configs[r'$invokable'] = 'write';
-    configs[r'$result'] = 'stream';
-    configs[r'$params'] = [
+    configs[r"$name"] = "Query";
+    configs[r"$invokable"] = "write";
+    configs[r"$result"] = "stream";
+    configs[r"$params"] = [
       {
-        'name': 'query',
-        'type': 'string',
-        'editor': 'textarea'
+        "name": "query",
+        "type": "string",
+        "editor": "textarea"
       }
     ];
   }
@@ -21,7 +21,7 @@ class BrokerQueryNode extends BrokerStaticNode {
   InvokeResponse invoke(Map params, Responder responder,
     InvokeResponse response, Node parentNode,
     [int maxPermission = Permission.CONFIG]) {
-    Object query = params['query'];
+    Object query = params["query"];
     BrokerQueryCommand command;
     if (query is String) {
       command = _manager.parseDql(query);

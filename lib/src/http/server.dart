@@ -35,7 +35,7 @@ class DsSimpleLinkManager implements ServerLinkManager {
   }
 
   void onLinkDisconnected(ServerLink link) {
-    
+
   }
 }
 
@@ -50,16 +50,16 @@ class DsHttpServer {
   int updateInterval = 200;
 
   /// to open a secure server, SecureSocket.initialize() need to be called before start()
-  DsHttpServer.start(dynamic address, //
-      {int httpPort: 8080,
-      int httpsPort: 8443,
-      String certificateName,
-      sslContext: false,
-      linkManager,
-      bool shouldSaveFiles: true,
-      this.privateKey,
-      this.nodeProvider})
-      : _linkManager =
+  DsHttpServer.start(dynamic address, {
+    int httpPort: 8080,
+    int httpsPort: 8443,
+    String certificateName,
+    sslContext: false,
+    linkManager,
+    bool shouldSaveFiles: true,
+    this.privateKey,
+    this.nodeProvider}) :
+      _linkManager =
             (linkManager == null) ? new DsSimpleLinkManager() : linkManager {
     var completer = new Completer();
     onServerReady = completer.future;
@@ -285,8 +285,7 @@ class DsHttpServer {
       throw HttpStatus.UNAUTHORIZED;
     }
   }
-  
+
   void onLinkDisconnected(HttpServerLink link) {
-    print('disconnect');
   }
 }

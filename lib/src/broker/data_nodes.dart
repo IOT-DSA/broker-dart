@@ -72,7 +72,7 @@ class BrokerDataRoot extends BrokerDataNode {
   }
 }
 
-InvokeResponse addDataNode(Map params, Responder responder,
+InvokeResponse _addDataNode(Map params, Responder responder,
   InvokeResponse response, LocalNode parentNode) {
   Object name = params['Name'];
   Object type = params['Type'];
@@ -115,7 +115,7 @@ InvokeResponse addDataNode(Map params, Responder responder,
   return response..close(DSError.INVALID_PARAMETER);
 }
 
-InvokeResponse deleteDataNode(Map params, Responder responder,
+InvokeResponse _deleteDataNode(Map params, Responder responder,
   InvokeResponse response, LocalNode parentNode) {
   Object recursive = params['Recursive'];
   if (parentNode is BrokerDataNode &&
@@ -149,7 +149,7 @@ InvokeResponse deleteDataNode(Map params, Responder responder,
   return response..close(DSError.INVALID_PARAMETER);
 }
 
-InvokeResponse renameDataNode(Map params, Responder responder,
+InvokeResponse _renameDataNode(Map params, Responder responder,
   InvokeResponse response, LocalNode parentNode) {
   Object name = params['Name'];
   if (parentNode is BrokerDataNode &&
@@ -167,7 +167,7 @@ InvokeResponse renameDataNode(Map params, Responder responder,
   return response..close(DSError.INVALID_PARAMETER);
 }
 
-InvokeResponse duplicateDataNode(Map params, Responder responder,
+InvokeResponse _duplicateDataNode(Map params, Responder responder,
   InvokeResponse response, LocalNode parentNode) {
   Object name = params['Name'];
   if (parentNode is BrokerDataNode &&
@@ -230,7 +230,7 @@ void removeDataNodeRecursive(BrokerDataNode node, String name) {
   node.clearValue();
 }
 
-InvokeResponse publish(Map params, Responder responder,
+InvokeResponse _publishDataNode(Map params, Responder responder,
   InvokeResponse response, LocalNode parentNode) {
   // return true when params are valid
   bool publishReqParams(InvokeResponse invokeResponse, Map m) {
@@ -274,15 +274,19 @@ InvokeResponse publish(Map params, Responder responder,
   return response..close(DSError.INVALID_PARAMETER);
 }
 
-Map dataNodeFunctions = {
+final Map<String, dynamic> _dataNodeFunctions = <String, dynamic>{
   "broker": {
     "dataNode": {
-      "addNode": addDataNode,
-      "addValue": addDataNode,
-      "deleteNode": deleteDataNode,
-      "renameNode": renameDataNode,
-      "duplicateNode": duplicateDataNode
+      "addNode": _addDataNode,
+      "addValue": _addDataNode,
+      "deleteNode": _deleteDataNode,
+      "renameNode": _renameDataNode,
+      "duplicateNode": _duplicateDataNode
     },
-    "dataRoot": {"addNode": addDataNode, "addValue": addDataNode, "publish":publish},
+    "dataRoot": {
+      "addNode": _addDataNode,
+      "addValue": _addDataNode,
+      "publish": _publishDataNode
+    },
   }
 };

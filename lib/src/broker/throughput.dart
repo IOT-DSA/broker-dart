@@ -11,32 +11,70 @@ class ThroughPutController {
 
   void initNodes(NodeProvider provider) {
     messagesOutPerSecond = new ThroughPutNode(
-        "/sys/messagesOutPerSecond", provider)..configs[r"$type"] = "number";
+      "/sys/messagesOutPerSecond",
+      provider
+    )..configs[r"$type"] = "number";
+
     messagesInPerSecond = new ThroughPutNode(
-        "/sys/messagesInPerSecond", provider)..configs[r"$type"] = "number";
+      "/sys/messagesInPerSecond",
+      provider
+    )..configs[r"$type"] = "number";
 
     frameOutPerSecond = new ThroughPutNode(
-        "/sys/frameOutPerSecond", provider)..configs[r"$type"] = "number";
-    frameInPerSecond = new ThroughPutNode(
-        "/sys/frameInPerSecond", provider)..configs[r"$type"] = "number";
+      "/sys/frameOutPerSecond",
+      provider
+    )..configs[r"$type"] = "number";
 
-    dataOutPerSecond = new ThroughPutNode("/sys/dataOutPerSecond", provider)
-      ..configs[r"$type"] = "number"..configs[r"@unit"] = "bytes";
-    dataInPerSecond = new ThroughPutNode("/sys/dataInPerSecond", provider)
-      ..configs[r"$type"] = "number"..configs[r"@unit"] = "bytes";
+    frameInPerSecond = new ThroughPutNode(
+      "/sys/frameInPerSecond",
+      provider
+    )..configs[r"$type"] = "number";
+
+    dataOutPerSecond = new ThroughPutNode(
+      "/sys/dataOutPerSecond",
+      provider
+    )..configs[r"$type"] = "number"
+      ..configs[r"@unit"] = "bytes";
+
+    dataInPerSecond = new ThroughPutNode(
+      "/sys/dataInPerSecond",
+      provider
+    )..configs[r"$type"] = "number"
+      ..configs[r"@unit"] = "bytes";
   }
 
   Timer _timer;
 
   void changeValue(Timer t) {
-    messagesInPerSecond.updateValue(WebSocketConnection.messageIn, force: true);
-    dataInPerSecond.updateValue(WebSocketConnection.dataIn, force: true);
+    messagesInPerSecond.updateValue(
+      WebSocketConnection.messageIn,
+      force: true
+    );
 
-    messagesOutPerSecond.updateValue(WebSocketConnection.messageOut, force: true);
-    dataOutPerSecond.updateValue(WebSocketConnection.dataOut, force: true);
+    dataInPerSecond.updateValue(
+      WebSocketConnection.dataIn,
+      force: true
+    );
 
-    frameInPerSecond.updateValue(WebSocketConnection.frameIn, force: true);
-    frameOutPerSecond.updateValue(WebSocketConnection.frameOut, force: true);
+    messagesOutPerSecond.updateValue(
+      WebSocketConnection.messageOut,
+      force: true
+    );
+
+    dataOutPerSecond.updateValue(
+      WebSocketConnection.dataOut,
+      force: true
+    );
+
+    frameInPerSecond.updateValue(
+      WebSocketConnection.frameIn,
+      force: true
+    );
+
+    frameOutPerSecond.updateValue(
+      WebSocketConnection.frameOut,
+      force: true
+    );
 
     WebSocketConnection.messageIn = 0;
     WebSocketConnection.dataIn = 0;

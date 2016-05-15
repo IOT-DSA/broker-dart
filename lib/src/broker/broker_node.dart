@@ -38,14 +38,16 @@ class BrokerNode extends LocalNodeImpl with BrokerNodePermission {
 
 /// nodes that automatic add itself to broker tree and always stay there
 class BrokerStaticNode extends BrokerNode {
-  BrokerStaticNode(String path, BrokerNodeProvider provider) : super(path, provider) {
+  BrokerStaticNode(String path, BrokerNodeProvider provider) :
+      super(path, provider) {
     provider.setNode(path, this);
   }
 }
 
 /// Version node
 class BrokerVersionNode extends BrokerStaticNode {
-  BrokerVersionNode(String path, BrokerNodeProvider provider, String version) : super(path, provider) {
+  BrokerVersionNode(String path, BrokerNodeProvider provider, String version) :
+      super(path, provider) {
     configs[r"$name"] = "DSA Version";
     configs[r"$type"] = "string";
     updateValue(version);
@@ -54,7 +56,8 @@ class BrokerVersionNode extends BrokerStaticNode {
 
 /// Start Time node
 class StartTimeNode extends BrokerStaticNode {
-  StartTimeNode(String path, BrokerNodeProvider provider) : super(path, provider) {
+  StartTimeNode(String path, BrokerNodeProvider provider) :
+      super(path, provider) {
     configs[r"$name"] = "Start Time";
     configs[r"$type"] = "time";
     updateValue(ValueUpdate.getTs());
@@ -63,7 +66,8 @@ class StartTimeNode extends BrokerStaticNode {
 
 /// Clear Conns node
 class ClearConnsAction extends BrokerStaticNode {
-  ClearConnsAction(String path, BrokerNodeProvider provider) : super(path, provider) {
+  ClearConnsAction(String path, BrokerNodeProvider provider) :
+      super(path, provider) {
     configs[r"$name"] = "Clear Conns";
     configs[r"$invokable"] = "config";
   }
@@ -78,7 +82,8 @@ class ClearConnsAction extends BrokerStaticNode {
 }
 
 class RootNode extends BrokerNode {
-  RootNode(String path, BrokerNodeProvider provider) : super(path, provider) {
+  RootNode(String path, BrokerNodeProvider provider) :
+      super(path, provider) {
     configs[r"$is"] = "dsa/broker";
 
     if (provider != null) {
@@ -116,7 +121,8 @@ class RootNode extends BrokerNode {
 
 
 class BrokerHiddenNode extends BrokerNode {
-  BrokerHiddenNode(String path, BrokerNodeProvider provider) : super(path, provider) {
+  BrokerHiddenNode(String path, BrokerNodeProvider provider) :
+      super(path, provider) {
     configs[r"$hidden"] = true;
   }
 

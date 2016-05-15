@@ -53,7 +53,8 @@ class BrokerStatsNode extends BrokerNode {
       openRequestsNode.updateValue(count);
     }
 
-    if (activeSubscriptionsNode != null && activeSubscriptionsNode.hasSubscriber) {
+    if (activeSubscriptionsNode != null &&
+      activeSubscriptionsNode.hasSubscriber) {
       var count = provider.links.values.fold(
         0,
         (int a, BaseLink b) => a + b.responder.subscriptionCount

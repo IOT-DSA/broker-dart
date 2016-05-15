@@ -223,7 +223,8 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
       callbacks.forEach((callback, qos) {
         callback(_lastValueUpdate);
       });
-    } else if (_lastValueUpdate == null || _lastValueUpdate.value != update || force) {
+    } else if (_lastValueUpdate == null ||
+      _lastValueUpdate.value != update || force) {
       _lastValueUpdate = new ValueUpdate(update);
       callbacks.forEach((callback, qos) {
         callback(_lastValueUpdate);
@@ -278,9 +279,11 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     }, onDone: () {
       response.close();
     });
-    response.onReqParams = (InvokeResponse resp, Map m){
+
+    response.onReqParams = (InvokeResponse resp, Map m) {
       // TODO
     };
+
     response.onClose = (InvokeResponse rsp) {
       sub.cancel();
     };

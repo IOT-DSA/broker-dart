@@ -199,6 +199,7 @@ class HttpServerLink implements ServerLink {
       logger.warning("$dsId was rejected due to an improper auth value");
       throw HttpStatus.UNAUTHORIZED;
     }
+
     if (wsconnection != null) {
       wsconnection.close();
     }
