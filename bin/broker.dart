@@ -14,15 +14,11 @@ LinkProvider link;
 BrokerDiscoveryClient discovery;
 
 const Map<String, String> VARS = const {
-  "BROKER_URL": "broker_url",
-  "BROKER_LINK_PREFIX": "link_prefix",
   "BROKER_PORT": "port",
   "BROKER_HOST": "host",
-  "BROKER_HTTPS_PORT": "https_port",
-  "BROKER_CERTIFICATE_NAME": "certificate_name",
   "BROKER_BROADCAST": "broadcast",
-  "BROKER_BROADCAST_URL": "broadcast_url",
-  "BROKER_DOWNSTREAM_NAME": "downstream_name"
+  "BROKER_BROADCAST_URL": "broadcastUrl",
+  "BROKER_DOWNSTREAM_NAME": "downstreamName"
 };
 
 Future<String> getNetworkAddress() async {
@@ -50,9 +46,8 @@ main(List<String> _args) async {
     var config = {
       "host": "0.0.0.0",
       "port": 8081,
-      "link_prefix": "broker-",
       "broadcast": true,
-      "downstream_name": "downstream"
+      "downstreamName": "downstream"
     };
 
     VARS.forEach((n, c) {
@@ -86,47 +81,65 @@ main(List<String> _args) async {
     if (!config.containsKey(key)) {
       return defaultValue;
     }
-    return config[key];
+    var value = config[key];
+
+    if (value == null) {
+      return defaultValue;
+    }
+
+    return value;
   }
 
-  saveConfig() async {
+  saveConfig() {
     var data = const JsonEncoder.withIndent("  ").convert(config);
-    await configFile.writeAsString(data + '\n');
+    configFile.writeAsStringSync(data + '\n');
   }
 
-  updateLogLevel(getConfig("log_level", "info"));
-  var downstreamName = getConfig("downstream_name", "downstream");
+  updateLogLevel(getConfig("logLevel", "info"));
+  var downstreamName = getConfig("downstreamName", "downstream");
   broker = new BrokerNodeProvider(downstreamName: downstreamName);
+
+  int httpsPort = getConfig("httpsPort", 8443);
+  String sslCertificatePath = getConfig("sslCertificatePath", "");
+  String sslKeyPath = getConfig("sslKeyPath", "");
+  String sslCertificatePassword = getConfig("sslCertificatePassword", "");
+  String sslKeyPassword = getConfig("sslKeyPassword", "");
+
+  if (sslCertificatePassword.isEmpty) {
+    sslCertificatePassword = null;
+  }
+
+  if (sslKeyPassword.isEmpty) {
+    sslKeyPassword = null;
+  }
+
+  SecurityContext context = SecurityContext.defaultContext;
+
+  if (httpsPort > 0 && sslCertificatePath.isNotEmpty && sslKeyPath.isNotEmpty) {
+    context.useCertificateChain(
+      sslCertificatePath,
+      password: sslCertificatePassword
+    );
+
+    context.usePrivateKey(sslKeyPath, password: sslKeyPassword);
+  }
+
   server = new DsHttpServer.start(
     getConfig("host", "0.0.0.0"),
-    httpPort: getConfig("port", 8081),
-    httpsPort: getConfig("https_port", -1),
-    certificateName: getConfig("certificate_name"),
+    httpPort: getConfig("port", 8080),
+    httpsPort: httpsPort,
     nodeProvider: broker,
-    linkManager: broker
+    linkManager: broker,
+    sslContext: context
   );
 
-  https = getConfig("https_port", -1) != -1;
-
-  if (getConfig("broker_url") != null) {
-    var url = getConfig("broker_url");
-    args.addAll(["--broker", url]);
-  }
-
-  if (args.any((it) => it.startsWith("--broker")) || args.contains("-b")) {
-    link = new LinkProvider(
-      args,
-      getConfig("link_prefix", "broker-"),
-      provider: broker
-    );
-    link.connect();
-  }
+  https = getConfig("httpsPort", -1) != -1;
 
   if (getConfig("broadcast", false)) {
     var addr = await getNetworkAddress();
     var scheme = https ? "https" : "http";
-    var port = https ? getConfig("https_port") : getConfig("port");
-    var url = getConfig("broadcast_url", "${scheme}://${addr}:${port}/conn");
+    var port = https ? getConfig("httpsPort") : getConfig("port");
+    var url = getConfig("broadcastUrl", "${scheme}://${addr}:${port}/conn");
     print("Starting Broadcast of Broker at ${url}");
     discovery = new BrokerDiscoveryClient();
     try {
@@ -151,20 +164,38 @@ main(List<String> _args) async {
       var ourName = upstream[name]["name"];
       var enabled = upstream[name]["enabled"];
       var group = upstream[name]["group"];
-      broker.upstream.addUpstreamConnection(name, url, ourName, group, enabled);
+      broker.upstream.addUpstreamConnection(
+        name,
+        url,
+        ourName,
+        group,
+        enabled
+      );
     }
   }
 
   broker.upstream.onUpdate = (map) async {
     config["upstream"] = map;
-    await saveConfig();
+    saveConfig();
+  };
+
+  broker.setConfigHandler = (String name, dynamic value) async {
+    config[name] = value;
+    saveConfig();
   };
 }
 
-const String defaultConfig = """{
+final String defaultConfig = const JsonEncoder.withIndent("  ").convert({
   "host": "0.0.0.0",
   "port": 8080,
-  "link_prefix": "broker-",
-  "downstream_name": "downstream"
-}
-""";
+  "httpsPort": 8443,
+  "downstreamName": "downstream",
+  "logLevel": "info",
+  "quarantine": false,
+  "allowAllLinks": true,
+  "upstream": {},
+  "sslCertificatePath": "",
+  "sslKeyPath": "",
+  "sslCertificatePassword": "",
+  "sslKeyPassword": ""
+});

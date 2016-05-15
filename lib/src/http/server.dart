@@ -53,7 +53,6 @@ class DsHttpServer {
   DsHttpServer.start(dynamic address, {
     int httpPort: 8080,
     int httpsPort: 8443,
-    String certificateName,
     sslContext: false,
     linkManager,
     bool shouldSaveFiles: true,
@@ -71,50 +70,45 @@ class DsHttpServer {
     serverPublicKey = privateKey.publicKey.qBase64;
     serverDsId = privateKey.publicKey.getDsId("broker-dsa");
 
+    var futures = <Future>[];
+
     if (httpPort > 0) {
-      HttpServer.bind(address, httpPort).then((server) {
+      futures.add(HttpServer.bind(address, httpPort).then((server) {
         logger.info("Listening on HTTP port $httpPort");
         server.listen(_handleRequest);
-        if (!completer.isCompleted) {
-          completer.complete();
-        }
         httpServer = server;
       }).catchError((Object err) {
         logger.severe(err);
-      });
+      }));
     }
 
-    if (httpsPort > 0 && certificateName != null) {
-      if (certificateName != null && certificateName.isNotEmpty) {
-        Future future;
-        if (sslContext != false) {
-          var func = HttpServer
-              .bindSecure;
-          future = Function.apply(func, [address, httpsPort, sslContext], {
-            #shared: true
-          });
-        } else {
-          var func = HttpServer
-              .bindSecure;
-          future = Function.apply(func, [address, httpPort], {
-            #shared: true,
-            #certificateName: certificateName
-          });
-        }
+    if (httpsPort > 0 && sslContext is SecurityContext) {
+      futures.add(HttpServer.bindSecure(address, httpsPort, sslContext).then((HttpServer server) {
+        logger.info("Listening on HTTP port $httpsPort");
+        server.listen(_handleRequest);
+        httpsServer = server;
+      }));
+    }
 
-        future.then((HttpServer server) {
-          server.listen(_handleRequest, onError: (e) {
-          }, cancelOnError: false);
-        });
+    Future.wait(futures).then((_) {
+      if (!completer.isCompleted) {
+        completer.complete();
       }
-    }
+    });
   }
 
   HttpServer httpServer;
+  HttpServer httpsServer;
   Future onServerReady;
 
   Future stop() async {
-    await httpServer.close();
+    if (httpServer != null) {
+      await httpServer.close();
+    }
+
+    if (httpsServer != null) {
+      await httpsServer.close();
+    }
   }
 
   void _handleRequest(HttpRequest request) {

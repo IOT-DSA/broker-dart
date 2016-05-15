@@ -32,6 +32,7 @@ part "src/broker/responder.dart";
 part "src/broker/stats.dart";
 part "src/broker/quarantine.dart";
 part "src/broker/upstream.dart";
+part "src/broker/config_node.dart";
 
 part "src/http/server_link.dart";
 part "src/http/server.dart";

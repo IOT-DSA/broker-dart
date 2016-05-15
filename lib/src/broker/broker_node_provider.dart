@@ -1,5 +1,7 @@
 part of dsbroker.broker;
 
+typedef void BrokerConfigSetHandler<T>(String name, T value);
+
 class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   /// map that holds all nodes
   /// a node is not in parent node"s children when real data/connection doesn"t exist
@@ -30,6 +32,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   BrokerNode upstreamDataNode;
   BrokerNode quarantineNode;
   BrokerNode tokens;
+
+  BrokerConfigSetHandler setConfigHandler;
 
   String uid;
 
@@ -207,13 +211,22 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
     stats.init();
 
-    approveDslinkAction = new AuthorizeDSLinkAction("/sys/quarantine/authorize", this);
+    approveDslinkAction = new AuthorizeDSLinkAction(
+      "/sys/quarantine/authorize",
+      this
+    );
 
     if (defaultPermission != null) {
       approveDslinkAction.updateGroups(defaultPermission);
     }
     kickDslinkAction = new KickDSLinkAction("/sys/quarantine/deauthorize", this);
     updateGroupAction = new UpdateGroupAction("/sys/updateGroup", this);
+
+    new UpdateDefaultPermission("/sys/updateDefaultPermission", this)
+      ..updateData(defaultPermission);
+
+    new AllowAllLinksNode("/sys/allowAllLinks", this);
+    new EnableQuarantineNode("/sys/enableQuarantine", this);
   }
 
   /// load a fixed profile map
@@ -1020,5 +1033,11 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   Responder createResponder(String dsId, String session) {
     return new BrokerResponder(this, dsId);
+  }
+
+  void updateConfigValue(String name, dynamic value) {
+    if (setConfigHandler != null) {
+      setConfigHandler(name, value);
+    }
   }
 }
