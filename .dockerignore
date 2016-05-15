@@ -19,3 +19,5 @@ doc/
 /usernodes.json
 /defs.json
 /storage
+.git/
+.arc

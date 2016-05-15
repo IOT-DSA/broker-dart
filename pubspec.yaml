@@ -1,6 +1,6 @@
 name: dsbroker
 version: 1.0.0
-description: Dart based DSA Broker
+description: DSA Broker
 dependencies:
   dslink:
     git: https://github.com/IOT-DSA/sdk-dslink-dart.git
