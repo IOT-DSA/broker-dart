@@ -4,10 +4,10 @@ class BrokerResponder extends Responder {
   BrokerResponder(NodeProvider nodeProvider, String reqId) :
       super(nodeProvider, reqId);
 
-  void invoke(Map m) {
-    Path path = Path.getValidNodePath(m['path']);
+  void invoke(DSRequestPacket pkt) {
+    Path path = Path.getValidNodePath(pkt.path);
     if (path != null && path.isAbsolute) {
-      int rid = m['rid'];
+      int rid = pkt.rid;
       LocalNode parentNode = nodeProvider.getOrCreateNode(
         path.parentPath,
         false
@@ -31,14 +31,14 @@ class BrokerResponder extends Responder {
       }
 
       if (actionNode == null) {
-        closeResponse(m['rid'], error: DSError.PERMISSION_DENIED);
+        closeResponse(pkt.rid, error: DSError.PERMISSION_DENIED);
         return;
       }
       int permission = nodeProvider.permissions.getPermission(
         path.path,
         this
       );
-      int maxPermit = Permission.parse(m['permit']);
+      int maxPermit = Permission.NEVER;
       if (maxPermit < permission) {
         permission = maxPermit;
       }
@@ -53,9 +53,11 @@ class BrokerResponder extends Responder {
         }
       }
 
+      Map payload = pkt.readPayloadPackage();
+
       if (actionNode.getInvokePermission() <= permission) {
         actionNode.invoke(
-          m['params'],
+          payload["params"],
           this,
           addResponse(
             new InvokeResponse(
@@ -70,10 +72,10 @@ class BrokerResponder extends Responder {
           permission
         );
       } else {
-        closeResponse(m['rid'], error: DSError.PERMISSION_DENIED);
+        closeResponse(pkt.rid, error: DSError.PERMISSION_DENIED);
       }
     } else {
-      closeResponse(m['rid'], error: DSError.INVALID_PATH);
+      closeResponse(pkt.rid, error: DSError.INVALID_PATH);
     }
   }
 }

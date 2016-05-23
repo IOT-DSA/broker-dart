@@ -193,12 +193,13 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     return rslt;
   }
 
-  void unsubscribe(callback(ValueUpdate)) {
+  void unsubscribe(callback(ValueUpdate update)) {
     if (callbacks.containsKey(callback)) {
       callbacks.remove(callback);
     }
+
     if (callbacks.isEmpty) {
-      _linkManager.requester.unsubscribe(remotePath, updateValue);
+      //_linkManager.requester.unsubscribe(remotePath, updateValue);
       _valueReady = false;
     }
   }
