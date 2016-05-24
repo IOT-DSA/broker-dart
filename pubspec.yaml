@@ -10,4 +10,3 @@ environment:
   sdk: ^1.11.0
 executables:
   dsbroker: broker
-
