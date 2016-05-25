@@ -22,6 +22,7 @@ class BrokerDataNode extends BrokerNode {
       DsTimer.timerOnceBefore(
         (responder.nodeProvider as BrokerNodeProvider).saveDataNodes, 1000);
     }
+
     if (storage != null &&
       (lastValueUpdate == null || lastValueUpdate.value != value)) {
       storage.setValue(value);
@@ -38,6 +39,7 @@ class BrokerDataNode extends BrokerNode {
       }
     });
   }
+
   Response setAttribute(String name, Object value, Responder responder,
         Response response) {
     if (!attributes.containsKey(name) || attributes[name] != value) {
@@ -47,6 +49,7 @@ class BrokerDataNode extends BrokerNode {
     }
     return response..close();
   }
+
   bool persist() {
     DsTimer.timerOnceBefore(
            provider.saveDataNodes, 1000);
@@ -104,6 +107,7 @@ InvokeResponse _addDataNode(Map params, Responder responder,
       if (editor is String) {
         node.configs[r'$editor'] = editor;
       }
+      node.updateValue(null);
     }
     parentNode.children[name] = node;
     node.parent = parentNode;
