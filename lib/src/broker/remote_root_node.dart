@@ -4,7 +4,7 @@ const List<String> _LINK_ROOT_ALLOWED = const [
   r"$uid"
 ];
 
-// TODO, implement special configs and attribute merging
+// TODO: implement special configs and attribute merging
 class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implements BrokerNode {
   RemoteLinkRootNode(
       String path, String remotePath, RemoteLinkManager linkManager)
@@ -15,24 +15,30 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
   bool get isBroker {
     return configs[r'$is'] == 'dsa/broker';
   }
-  // TODO does this need parentNode?
+
+  // TODO: does this need parentNode?
+  @override
   LocalNode parentNode;
 
+  @override
   ListController createListController(Requester requester) {
     return new RemoteLinkRootListController(this, requester);
   }
 
+  @override
   Response setConfig(
       String name, Object value, Responder responder, Response response) {
     var config = Configs.getConfig(name, profile);
     return response..close(config.setConfig(value, this, responder));
   }
 
+  @override
   Response removeConfig(String name, Responder responder, Response response) {
     var config = Configs.getConfig(name, profile);
     return response..close(config.removeConfig(this, responder));
   }
 
+  @override
   void load(Map m) {
     m.forEach((String name, Object value) {
       if (name.startsWith(r'$')) {
@@ -49,17 +55,21 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
     }
   }
 
+  @override
   Map serialize(bool withChildren) {
     Map rslt = {};
     configs.forEach((String name, Object val) {
       rslt[name] = val;
     });
+
     attributes.forEach((String name, Object val) {
       rslt[name] = val;
     });
+
     pchildren.forEach((String name, VirtualNodePermission val) {
       rslt[name] = val.serialize();
     });
+
     List permissionData = this.serializePermission();
     if (permissionData != null) {
       rslt['?permissions'] = permissionData;
@@ -67,6 +77,7 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
     return rslt;
   }
 
+  @override
   void updateList(String name, [int permission = Permission.READ]) {
     listChangeController.add(name);
   }
@@ -77,7 +88,8 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
   }
 
   /// children list only for permissions
-  Map<String, VirtualNodePermission> pchildren = new Map<String, VirtualNodePermission>();
+  Map<String, VirtualNodePermission> pchildren =
+    new Map<String, VirtualNodePermission>();
 
   BrokerNodePermission getPermissionChild(String str) {
     return pchildren[str];
@@ -90,6 +102,22 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
     List paths = path.split('/');
     return getPermissionChildWithPaths(this, paths, 1, create);
   }
+
+  @override
+  Map getSimpleMap() {
+    Map m = super.getSimpleMap();
+    if (configs.containsKey(r'$linkData')) {
+      m[r'$linkData'] = configs[r'$linkData'];
+    }
+    return m;
+  }
+
+  @override
+  bool persist() {
+    DsTimer.timerOnceAfter(provider.saveConns, 3000);
+    return true;
+  }
+
   static BrokerNodePermission getPermissionChildWithPaths(BrokerNodePermission p, List paths, int pos, bool create) {
     if (pos >= paths.length) {
       return p;
@@ -117,29 +145,16 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
     }
     return getPermissionChildWithPaths(pnext, paths, pos+1, create);
   }
-
-  @override
-  Map getSimpleMap() {
-    Map m = super.getSimpleMap();
-    if (configs.containsKey(r'$linkData')) {
-      m[r'$linkData'] = configs[r'$linkData'];
-    }
-    return m;
-  }
-
-  bool persist() {
-    DsTimer.timerOnceAfter(provider.saveConns, 3000);
-    return true;
-  }
 }
 
 class RemoteLinkRootListController extends ListController {
   RemoteLinkRootListController(RemoteNode node, Requester requester)
       : super(node, requester);
 
+  @override
   void onUpdate(String streamStatus, List updates, List columns, Map meta, DSError error) {
     bool reseted = false;
-    // TODO implement error handling
+    // TODO: implement error handling
     if (updates != null) {
       for (Object update in updates) {
         String name;

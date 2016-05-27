@@ -467,9 +467,11 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
   IValueStorage _attributeStorage;
   Map overrideAttributes = {};
   Map downstreamAttributes = {};
+
   Object getOverideAttributes(String attr) {
     return overrideAttributes[attr];
   }
+
   /// override attribute change from the broker
   void overrideAttributeChanged(String name, Object value, bool clear) {
     if (!clear && value is Map && value['@'] == 'clear') {
@@ -506,6 +508,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
       listChangeController.add(name);
     }
   }
+
   /// attribute change update from downstream
   bool downstreamAttributeChanged(String name, Object value, bool clear) {
     if (clear) {
@@ -536,6 +539,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
 
   /// reset node cache when remote list api require a reset of the node data
   /// this is done by a new $is in list update
+  @override
   void resetNodeCache() {
     configs.clear();
     attributes.clear();
@@ -557,8 +561,10 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
 }
 
 class RemoteLinkListController extends ListController {
-  RemoteLinkListController(RemoteNode node, Requester requester) : super(node, requester);
+  RemoteLinkListController(RemoteNode node, Requester requester) :
+      super(node, requester);
 
+  @override
   void onUpdate(String streamStatus, List updates, List columns, Map meta, DSError error) {
     bool reseted = false;
     // TODO: implement error handling
@@ -593,6 +599,7 @@ class RemoteLinkListController extends ListController {
           continue;
           // invalid response
         }
+
         if (name.startsWith(r'$')) {
           if (!reseted && (name == r'$is' || name == r'$base' || (name == r'$disconnectedTs' && value is String))) {
             reseted = true;
@@ -632,6 +639,7 @@ class RemoteLinkListController extends ListController {
           }
         }
       }
+
       if (request.streamStatus != StreamStatus.initialize) {
         node.listed = true;
       }

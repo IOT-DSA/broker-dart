@@ -68,6 +68,7 @@ class UpdateDefaultPermission extends BrokerStaticNode {
     return response..close();
   }
 }
+
 class AllowAllLinksNode extends BrokerStaticNode {
   AllowAllLinksNode(String path, BrokerNodeProvider provider)
     : super(path, provider) {

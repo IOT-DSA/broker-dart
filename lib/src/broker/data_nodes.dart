@@ -38,6 +38,7 @@ class BrokerDataNode extends BrokerNode {
       }
     });
   }
+
   Response setAttribute(String name, Object value, Responder responder,
         Response response) {
     if (!attributes.containsKey(name) || attributes[name] != value) {
@@ -47,9 +48,12 @@ class BrokerDataNode extends BrokerNode {
     }
     return response..close();
   }
+
   bool persist() {
     DsTimer.timerOnceBefore(
-           provider.saveDataNodes, 1000);
+      provider.saveDataNodes,
+      1000
+    );
     return true;
   }
 }

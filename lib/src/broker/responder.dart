@@ -4,6 +4,7 @@ class BrokerResponder extends Responder {
   BrokerResponder(NodeProvider nodeProvider, String reqId) :
       super(nodeProvider, reqId);
 
+  @override
   void invoke(DSRequestPacket pkt) {
     Path path = Path.getValidNodePath(pkt.path);
     if (path != null && path.isAbsolute) {
@@ -15,10 +16,10 @@ class BrokerResponder extends Responder {
       LocalNode actionNode;
       bool doublePermissionCheck = false;
       if (path.name == 'getHistory' &&
-        parentNode.getOverideAttributes('@@getHistory') is Map) {
+        parentNode.getOverrideAttributes('@@getHistory') is Map) {
         // alias node for getHistory action
         // TODO, should we make this a generic way of alias node
-        Map m  = parentNode.getOverideAttributes('@@getHistory');
+        Map m  = parentNode.getOverrideAttributes('@@getHistory');
         if (m['val'] is List && (m['val'] as List).length > 0) {
           String path = m['val'][0];
           actionNode = nodeProvider.getOrCreateNode(path, false);

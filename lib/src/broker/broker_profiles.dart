@@ -1,6 +1,6 @@
 part of dsbroker.broker;
 
-Map<String, dynamic> brokerProfileMap = {
+final Map<String, dynamic> brokerProfileMap = {
   "broker": {
     "userNode": {
       "addChild": {
