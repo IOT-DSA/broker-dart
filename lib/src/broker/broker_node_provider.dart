@@ -37,10 +37,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   String uid;
 
-  BrokerStatsNode stats;
+  BrokerStatsController stats;
 
   Map rootStructure = {"users": {}, "sys": {"tokens": {},"quarantine":{}}, "upstream": {}};
-
 
   bool shouldSaveFiles = true;
   bool enabledQuarantine = false;
@@ -199,6 +198,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   void initSys() {
     new BrokerVersionNode("/sys/version", this, DSA_VERSION);
     new StartTimeNode("/sys/startTime", this);
+    new BrokerDistNode("/sys/dist", this, BrokerGlobalConfig.BROKER_DIST);
     new ClearConnsAction("/sys/clearConns", this);
     new UpdatePermissionAction("/sys/updatePermissions", this);
 
@@ -207,8 +207,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
     traceNode.init();
 
-    stats = new BrokerStatsNode("/sys/stats", this);
-
+    stats = new BrokerStatsController(this);
     stats.init();
 
     approveDslinkAction = new AuthorizeDSLinkAction(

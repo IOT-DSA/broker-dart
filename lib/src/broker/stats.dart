@@ -1,19 +1,18 @@
 part of dsbroker.broker;
 
-class BrokerStatsNode extends BrokerNode {
+class BrokerStatsController {
+  final BrokerNodeProvider provider;
+
+  BrokerStatsController(this.provider);
+
   SimpleBrokerStatisticNode openRequestsNode;
   SimpleBrokerStatisticNode activeSubscriptionsNode;
 
   Disposable quarterSecondTicker;
 
-  BrokerStatsNode(String path, BrokerNodeProvider provider) :
-      super(path, provider) {
-    provider.setNode("/sys/stats", this);
-  }
-
   void init() {
     SimpleBrokerStatisticNode addNumberStat(String name, String id) {
-      var node = new SimpleBrokerStatisticNode("${path}/${id}", provider);
+      var node = new SimpleBrokerStatisticNode("/sys/${id}", provider);
 
       node.configs.addAll({
         r"$name": name,

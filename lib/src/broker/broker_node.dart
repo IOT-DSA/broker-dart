@@ -54,6 +54,16 @@ class BrokerVersionNode extends BrokerStaticNode {
   }
 }
 
+/// Broker distribution node
+class BrokerDistNode extends BrokerStaticNode {
+  BrokerDistNode(String path, BrokerNodeProvider provider, String dist) :
+      super(path, provider) {
+    configs[r"$name"] = "Distribution";
+    configs[r"$type"] = "string";
+    updateValue(dist);
+  }
+}
+
 /// Start Time node
 class StartTimeNode extends BrokerStaticNode {
   StartTimeNode(String path, BrokerNodeProvider provider) :
