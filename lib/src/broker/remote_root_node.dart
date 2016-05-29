@@ -131,6 +131,9 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
     DsTimer.timerOnceAfter(provider.saveConns, 3000);
     return true;
   }
+
+  @override
+  IValueStorage _attributeStore = null;
 }
 
 class RemoteLinkRootListController extends ListController {

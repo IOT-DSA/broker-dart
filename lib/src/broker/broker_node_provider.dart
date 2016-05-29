@@ -50,7 +50,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   BrokerTraceNode traceNode;
   UpstreamNode upstream;
 
-  IValueStorageBucket attributeStorageBucket;
+  IValueStorageBucket brokerAttributeStorageBucket;
+  IValueStorageBucket overrideAttributeStorageBucket;
 
   TokenContext tokenContext;
 
@@ -70,6 +71,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (storage == null) {
       storage = new SimpleStorageManager("storage");
     }
+
+    brokerAttributeStorageBucket = storage
+      .getOrCreateValueStorageBucket("brokerAttributes");
 
     uid = generateToken();
 
@@ -328,8 +332,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   loadOverrideAttributes() async {
     IValueStorageBucket storageBucket = storage.getOrCreateValueStorageBucket("attribute");
-    attributeStorageBucket = storageBucket;
-    logger.finest("loading proxy attributes");
+    overrideAttributeStorageBucket = storageBucket;
+
+    logger.finest("Loading Proxy Attributes");
     Map values = await storageBucket.load();
     values.forEach((key, val) {
       LocalNode node = this.getOrCreateNode(key, false);
@@ -1037,6 +1042,12 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   void updateConfigValue(String name, dynamic value) {
     if (setConfigHandler != null) {
       setConfigHandler(name, value);
+    }
+  }
+
+  void saveBrokerNodeAttributes(BrokerNode node) {
+    if (node._attributeStore != null) {
+      node._attributeStore.setValue(node.attributes);
     }
   }
 }

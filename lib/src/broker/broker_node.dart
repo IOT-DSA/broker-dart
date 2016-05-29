@@ -4,7 +4,20 @@ part of dsbroker.broker;
 class BrokerNode extends LocalNodeImpl with BrokerNodePermission {
   final BrokerNodeProvider provider;
 
-  BrokerNode(String path, this.provider) : super(path);
+  IValueStorage _attributeStore;
+
+  BrokerNode(String path, this.provider) : super(path) {
+    if (provider.brokerAttributeStorageBucket != null) {
+      _attributeStore = provider.brokerAttributeStorageBucket
+        .getValueStorage(path);
+
+      _attributeStore.getValueAsync().then((value) {
+        if (value is Map) {
+          attributes.addAll(value);
+        }
+      });
+    }
+  }
 
   @override
   void load(Map m) {
@@ -24,11 +37,20 @@ class BrokerNode extends LocalNodeImpl with BrokerNodePermission {
     return rslt;
   }
 
+  @override
   BrokerNodePermission getPermissionChild(String str) {
     if (children[str] is BrokerNodePermission) {
       return children[str] as BrokerNodePermission;
     }
     return null;
+  }
+
+  @override
+  Response setAttribute(String name, Object value, Responder responder,
+    Response response) {
+    var result = super.setAttribute(name, value, responder, response);
+    provider.saveBrokerNodeAttributes(this);
+    return result;
   }
 
   bool persist() {
