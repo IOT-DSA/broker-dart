@@ -143,8 +143,11 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
         }
       }
     }
-    return getPermissionChildWithPaths(pnext, paths, pos+1, create);
+    return getPermissionChildWithPaths(pnext, paths, pos + 1, create);
   }
+
+  @override
+  IValueStorage _attributeStore;
 }
 
 class RemoteLinkRootListController extends ListController {

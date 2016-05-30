@@ -22,6 +22,7 @@ class BrokerDataNode extends BrokerNode {
       DsTimer.timerOnceBefore(
         (responder.nodeProvider as BrokerNodeProvider).saveDataNodes, 1000);
     }
+
     if (storage != null &&
       (lastValueUpdate == null || lastValueUpdate.value != value)) {
       storage.setValue(value);
@@ -108,6 +109,7 @@ InvokeResponse _addDataNode(Map params, Responder responder,
       if (editor is String) {
         node.configs[r'$editor'] = editor;
       }
+      node.updateValue(null);
     }
     parentNode.children[name] = node;
     node.parent = parentNode;

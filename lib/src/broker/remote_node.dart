@@ -478,8 +478,8 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
       clear = true;
     }
 
-    if (_attributeStorage == null && provider.attributeStorageBucket != null) {
-      _attributeStorage = provider.attributeStorageBucket.getValueStorage(path);
+    if (_attributeStorage == null && provider.overrideAttributeStorageBucket != null) {
+      _attributeStorage = provider.overrideAttributeStorageBucket.getValueStorage(path);
     }
 
     if (clear) {

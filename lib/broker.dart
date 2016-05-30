@@ -41,6 +41,10 @@ part "src/broker/permission_actions.dart";
 part "src/broker/query_node.dart";
 part "src/broker/broker_profiles.dart";
 
+class BrokerGlobalConfig {
+  static String BROKER_DIST = "dart";
+}
+
 Future<DsHttpServer> startBrokerServer(int port, {
   bool persist: true,
   BrokerNodeProvider broker,

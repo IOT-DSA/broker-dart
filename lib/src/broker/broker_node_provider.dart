@@ -37,10 +37,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   String uid;
 
-  BrokerStatsNode stats;
+  BrokerStatsController stats;
 
   Map rootStructure = {"users": {}, "sys": {"tokens": {},"quarantine":{}}, "upstream": {}};
-
 
   bool shouldSaveFiles = true;
   bool enabledQuarantine = false;
@@ -51,7 +50,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   BrokerTraceNode traceNode;
   UpstreamNode upstream;
 
-  IValueStorageBucket attributeStorageBucket;
+  IValueStorageBucket brokerAttributeStorageBucket;
+  IValueStorageBucket overrideAttributeStorageBucket;
 
   TokenContext tokenContext;
 
@@ -71,6 +71,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (storage == null) {
       storage = new SimpleStorageManager("storage");
     }
+
+    brokerAttributeStorageBucket = storage
+      .getOrCreateValueStorageBucket("brokerAttributes");
 
     uid = generateToken();
 
@@ -199,6 +202,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   void initSys() {
     new BrokerVersionNode("/sys/version", this, DSA_VERSION);
     new StartTimeNode("/sys/startTime", this);
+    new BrokerDistNode("/sys/dist", this, BrokerGlobalConfig.BROKER_DIST);
     new ClearConnsAction("/sys/clearConns", this);
     new UpdatePermissionAction("/sys/updatePermissions", this);
 
@@ -207,8 +211,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
     traceNode.init();
 
-    stats = new BrokerStatsNode("/sys/stats", this);
-
+    stats = new BrokerStatsController(this);
     stats.init();
 
     approveDslinkAction = new AuthorizeDSLinkAction(
@@ -329,8 +332,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   loadOverrideAttributes() async {
     IValueStorageBucket storageBucket = storage.getOrCreateValueStorageBucket("attribute");
-    attributeStorageBucket = storageBucket;
-    logger.finest("loading proxy attributes");
+    overrideAttributeStorageBucket = storageBucket;
+
+    logger.finest("Loading Proxy Attributes");
     Map values = await storageBucket.load();
     values.forEach((key, val) {
       LocalNode node = this.getOrCreateNode(key, false);
@@ -1038,6 +1042,12 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   void updateConfigValue(String name, dynamic value) {
     if (setConfigHandler != null) {
       setConfigHandler(name, value);
+    }
+  }
+
+  void saveBrokerNodeAttributes(BrokerNode node) {
+    if (node._attributeStore != null) {
+      node._attributeStore.setValue(node.attributes);
     }
   }
 }
