@@ -7,7 +7,7 @@ class BrokerNode extends LocalNodeImpl with BrokerNodePermission {
   IValueStorage _attributeStore;
 
   BrokerNode(String path, this.provider) : super(path) {
-    if (provider.brokerAttributeStorageBucket != null) {
+    if (path != null && provider.brokerAttributeStorageBucket != null) {
       _attributeStore = provider.brokerAttributeStorageBucket
         .getValueStorage(path);
 
