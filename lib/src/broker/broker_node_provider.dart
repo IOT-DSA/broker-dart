@@ -14,7 +14,6 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     new Map<String, RemoteLinkManager>();
 
   BrokerPermissions permissions;
-
   IStorageManager storage;
 
   String downstreamName;
@@ -39,7 +38,14 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   BrokerStatsController stats;
 
-  Map rootStructure = {"users": {}, "sys": {"tokens": {},"quarantine":{}}, "upstream": {}};
+  Map rootStructure = {
+    "users": {},
+    "sys": {
+      "tokens": {},
+      "quarantine":{}
+    },
+    "upstream": {}
+  };
 
   bool shouldSaveFiles = true;
   bool enabledQuarantine = false;
@@ -121,9 +127,20 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       // example: ["dgSuper", "config", "default", "write"]
       root.loadPermission(defaultPermission);
     }
-    defsNode.loadPermission([["default", "read"]]);
-    sysNode.loadPermission([[":config", "config"],["default", "none"]]);
-    quarantineNode.loadPermission([[":config", "config"],["default", "none"]]);
+
+    defsNode.loadPermission([
+      ["default", "read"]
+    ]);
+
+    sysNode.loadPermission([
+      [":config", "config"],
+      ["default", "none"]
+    ]);
+
+    quarantineNode.loadPermission([
+      [":config", "config"],
+      ["default", "none"]
+    ]);
 
     permissions.root = root;
   }
@@ -222,7 +239,12 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (defaultPermission != null) {
       approveDslinkAction.updateGroups(defaultPermission);
     }
-    kickDslinkAction = new KickDSLinkAction("/sys/quarantine/deauthorize", this);
+
+    kickDslinkAction = new KickDSLinkAction(
+      "/sys/quarantine/deauthorize",
+      this
+    );
+
     updateGroupAction = new UpdateGroupAction("/sys/updateGroup", this);
 
     new UpdateDefaultPermission("/sys/updateDefaultPermission", this)
@@ -1048,6 +1070,12 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   void saveBrokerNodeAttributes(BrokerNode node) {
     if (node._attributeStore != null) {
       node._attributeStore.setValue(node.attributes);
+    }
+  }
+
+  void disconnectAllLinks() {
+    for (BaseLink link in _links.values) {
+      link.close();
     }
   }
 }

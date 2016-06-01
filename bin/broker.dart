@@ -183,6 +183,14 @@ main(List<String> _args) async {
     config[name] = value;
     saveConfig();
   };
+
+  var handleSignal = (ProcessSignal signal) {
+    broker.disconnectAllLinks();
+    exit(0);
+  };
+
+  ProcessSignal.SIGINT.watch().listen(handleSignal);
+  ProcessSignal.SIGTERM.watch().listen(handleSignal);
 }
 
 final String defaultConfig = const JsonEncoder.withIndent("  ").convert({
