@@ -547,10 +547,6 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       return _getOrCreateDataNode(path, addToTree);
     }
 
-//    if (addToTree) {
-//      print("getOrCreateNode, addToTree = true, not supported");
-//    }
-
     LocalNode node = nodes[path];
     if (node != null) {
       return node;
@@ -611,11 +607,6 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         nodes[connPath] = conn.rootNode;
 
         conn.rootNode.parentNode = upstreamDataNode;
-//        if (addToTree) {
-//          upstreamDataNode.children[upstreamName] = conn.rootNode;
-//          conn.inTree = true;
-//          upstreamDataNode.updateList(upstreamName);
-//        }
       }
       node = conn.getOrCreateNode(path, false);
     } else if (path.startsWith("/sys/quarantine/")) {
@@ -651,7 +642,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   }
 
   bool clearNode(BrokerNode node) {
-    // TODO, keep it in memory if there are pending subscription
+    // TODO: keep it in memory if there are pending subscription
     // and remove it when subscription ends
     if (nodes[node.path] == node) {
       nodes.remove(node);

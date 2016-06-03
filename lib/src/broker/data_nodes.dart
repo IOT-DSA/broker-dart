@@ -41,7 +41,7 @@ class BrokerDataNode extends BrokerNode {
   }
 
   Response setAttribute(String name, Object value, Responder responder,
-        Response response) {
+    Response response) {
     if (!attributes.containsKey(name) || attributes[name] != value) {
       attributes[name] = value;
       updateList(name);
@@ -91,7 +91,7 @@ InvokeResponse _addDataNode(Map params, Responder responder,
     !name.startsWith(r'!')) {
     if (parentNode.children.containsKey(name)) {
       return response
-        ..close(new DSError('invalidParameter', msg: 'node already exist'));
+        ..close(new DSError('invalidParameter', msg: 'node already exists'));
     }
     BrokerDataNode node = responder.nodeProvider.getOrCreateNode(
       '${parentNode.path}/$name', false);
@@ -115,7 +115,9 @@ InvokeResponse _addDataNode(Map params, Responder responder,
     node.parent = parentNode;
     parentNode.updateList(name);
     DsTimer.timerOnceBefore(
-      (responder.nodeProvider as BrokerNodeProvider).saveDataNodes, 1000);
+      (responder.nodeProvider as BrokerNodeProvider).saveDataNodes,
+      1000
+    );
     return response..close();
   }
   return response..close(DSError.INVALID_PARAMETER);
@@ -165,7 +167,7 @@ InvokeResponse _renameDataNode(Map params, Responder responder,
   ) {
     cloneNodes(parentNode, parentNode.parent, name);
     removeDataNodeRecursive(parentNode,
-          parentNode.path.substring(parentNode.path.lastIndexOf('/') + 1));
+      parentNode.path.substring(parentNode.path.lastIndexOf('/') + 1));
     DsTimer.timerOnceBefore(
       (responder.nodeProvider as BrokerNodeProvider).saveDataNodes, 1000);
     return response..close();
@@ -189,22 +191,23 @@ InvokeResponse _duplicateDataNode(Map params, Responder responder,
   return response..close(DSError.INVALID_PARAMETER);
 }
 
-BrokerDataNode cloneNodes(BrokerDataNode oldNode, BrokerDataNode newParent, String name) {
+BrokerDataNode cloneNodes(BrokerDataNode oldNode, BrokerDataNode newParent,
+  String name) {
   BrokerDataNode node = newParent.provider.getOrCreateNode(
     '${newParent.path}/$name', false);
 
   newParent.children[name] = node;
   node.parent = newParent;
 
-  oldNode.children.forEach((k,n){
+  oldNode.children.forEach((k, n) {
     cloneNodes(n, node, k);
   });
 
-  oldNode.configs.forEach((k,v){
+  oldNode.configs.forEach((k, v) {
     node.configs[k] = v;
     node.updateList(k);
   });
-  oldNode.attributes.forEach((k,v){
+  oldNode.attributes.forEach((k, v) {
     node.attributes[k] = v;
     node.updateList(k);
   });
@@ -252,17 +255,19 @@ InvokeResponse _publishDataNode(Map params, Responder responder,
       if (!p.isNode || !p.valid) {
         return false;
       }
-      BrokerDataNode node = (parentNode.provider as BrokerNodeProvider)._getOrCreateDataNode(p.path);
+      BrokerDataNode node = (parentNode.provider as BrokerNodeProvider)
+        ._getOrCreateDataNode(p.path);
       if (ts is String && ts.length > 22) {
         int len = (ts as String).length;
         if (len > 29 && len < 35) {
           // fix ts with macro seconds
-          ts = '${(ts as String).substring(0,23)}${(ts as String).substring(len - 6)}';
+          ts = '${(ts as String).substring(0, 23)}${(ts as String).substring(len - 6)}';
         }
+
         try {
           DateTime.parse(ts);
-          node.updateValue(new ValueUpdate(value, ts:ts));
-        }catch(e){
+          node.updateValue(new ValueUpdate(value, ts: ts));
+        } catch (e) {
           return false;
         }
       }

@@ -3,7 +3,7 @@ part of dsbroker.broker;
 class BrokerResponder extends Responder {
   BrokerResponder(NodeProvider nodeProvider, String reqId) :
       super(nodeProvider, reqId);
-
+  
   @override
   void invoke(DSRequestPacket pkt) {
     Path path = Path.getValidNodePath(pkt.path);

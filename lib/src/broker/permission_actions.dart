@@ -11,50 +11,49 @@ class UpdatePermissionAction extends BrokerStaticNode {
         "type": "string"
       },
       {
-         "name": "Permissions",
-         "type": "dynamic",
-         "editor": "textarea"
+        "name": "Permissions",
+        "type": "dynamic",
+        "editor": "textarea"
       }
     ];
   }
 
   @override
   InvokeResponse invoke(Map params, Responder responder,
-      InvokeResponse response, LocalNode parentNode,
-      [int maxPermission = Permission.CONFIG]) {
+    InvokeResponse response, LocalNode parentNode,
+    [int maxPermission = Permission.CONFIG]) {
     if (maxPermission == Permission.CONFIG && params != null
-        && params["Path"] is String) {
+      && params["Path"] is String) {
       List permissions;
       if (params["Permissions"] is List) {
         permissions = params["Permissions"];
       } else if (params["Permissions"] is String) {
         try {
           permissions = JSON.decode(params["Permissions"]);
-        } catch(err) {
+        } catch (err) {
           return response..close(DSError.INVALID_PARAMETER);
         }
       }
       String path = params["Path"];
       int permission = provider.permissions.getPermission(path, responder);
       if (permission == Permission.CONFIG) {
-
         if (permissions == null) {
           LocalNode node = provider.getNode(path);
           if (node is BrokerNode) {
-             node.loadPermission(null);
-             if (!node.persist()) {
-               node.loadPermission(null);
-               response.close(DSError.PERMISSION_DENIED);
-             }
+            node.loadPermission(null);
+            if (!node.persist()) {
+              node.loadPermission(null);
+              response.close(DSError.PERMISSION_DENIED);
+            }
           } else if (node is RemoteLinkNode) {
             BrokerNodePermission permissionChild = node
               ._linkManager
               .rootNode
               .getPermissionChildWithPath(node.remotePath, false);
-             if (permissionChild != null) {
-               permissionChild.loadPermission(null);
-               node._linkManager.rootNode.persist();
-             }
+            if (permissionChild != null) {
+              permissionChild.loadPermission(null);
+              node._linkManager.rootNode.persist();
+            }
           }
         } else {
           LocalNode node = provider.getOrCreateNode(path);

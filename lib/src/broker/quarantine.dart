@@ -1,6 +1,5 @@
 part of dsbroker.broker;
 
-
 class AuthorizeDSLinkAction extends BrokerStaticNode {
   List dsidList = [];
   List groupList = [];
