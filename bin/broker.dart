@@ -190,7 +190,10 @@ main(List<String> _args) async {
   };
 
   ProcessSignal.SIGINT.watch().listen(handleSignal);
-  ProcessSignal.SIGTERM.watch().listen(handleSignal);
+
+  if (!Platform.isWindows) {
+    ProcessSignal.SIGTERM.watch().listen(handleSignal);
+  }
 }
 
 final String defaultConfig = const JsonEncoder.withIndent("  ").convert({
