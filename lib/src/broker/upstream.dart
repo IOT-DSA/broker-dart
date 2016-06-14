@@ -71,7 +71,13 @@ class UpstreamNode extends BrokerStaticNode {
   void loadConfigMap(Map x) {
     for (var k in x.keys) {
       var m = x[k];
-      addUpstreamConnection(k, m["url"], m["name"], m["token"], m["group"],m["enabled"]);
+      addUpstreamConnection(
+        k,
+        m["url"],
+        m["name"],
+        m["token"],
+        m["group"],
+        m["enabled"]);
     }
   }
 
@@ -237,6 +243,31 @@ class UpstreamUrlNode extends BrokerNode {
   }
 }
 
+class UpstreamBrokerNameNode extends BrokerNode {
+  UpstreamBrokerNameNode(String path, BrokerNodeProvider provider)
+    : super(path, provider);
+
+  Response setValue(Object value, Responder responder, Response response,
+    [int maxPermission = Permission.CONFIG]) {
+    if (value != null && value.toString().length > 0) {
+      var p = new Path(path).parentPath;
+      UpstreamBrokerNode un = provider.getOrCreateNode(p, false);
+
+      un.provider.removeLink(un.link, "@upstream@${un.name}", force: true);
+      un.stop();
+
+      un.ourName = value.toString();
+      un.enabled = true;
+      un.start();
+
+      provider.upstream.update();
+      return super.setValue(value, responder, response, maxPermission);
+    }
+
+    return response..close();
+  }
+}
+
 class UpstreamNameNode extends BrokerNode {
   UpstreamNameNode(String path, BrokerNodeProvider provider)
       : super(path, provider);
@@ -337,14 +368,14 @@ class UpstreamBrokerNode extends BrokerNode {
   String token;
   String group;
 
-  final String ourName;
+  String ourName;
 
   UpstreamEnabledNode enabledNode;
   UpstreamUrlNode urlNode;
   UpstreamNameNode nameNode;
   UpstreamTokenNode tokenNode;
   UpstreamGroupNode groupNode;
-  BrokerNode brokerNameNode;
+  UpstreamBrokerNameNode brokerNameNode;
   bool enabled = false;
 
   bool toBeRemoved = false;
@@ -369,8 +400,9 @@ class UpstreamBrokerNode extends BrokerNode {
     nameNode.configs[r"$writable"] = "write";
     nameNode.updateValue(name);
 
-    brokerNameNode = new BrokerNode("/sys/upstream/${name}/brokerName", provider);
+    brokerNameNode = new UpstreamBrokerNameNode("/sys/upstream/${name}/brokerName", provider);
     brokerNameNode.configs[r"$type"] = "string";
+    brokerNameNode.configs[r"$writable"] = "write";
     brokerNameNode.updateValue(ourName);
 
     tokenNode = new UpstreamTokenNode("/sys/upstream/${name}/token", provider);
