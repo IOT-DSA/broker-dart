@@ -268,7 +268,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
       return response..close(DSError.DISCONNECTED);
     }
     StreamSubscription sub = _linkManager.requester
-    .invoke(remotePath, params)
+    .invoke(remotePath, params, maxPermission)
     .listen((RequesterInvokeUpdate update) {
       if (update.error != null) {
         response.close(update.error);
