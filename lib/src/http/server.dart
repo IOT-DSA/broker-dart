@@ -147,6 +147,11 @@ class DsHttpServer {
         return;
       }
 
+      if (request.uri.path.startsWith("/icon/")) {
+        handleIcon(request);
+        return;
+      }
+
       String dsId = request.uri.queryParameters["dsId"];
 
       if (dsId == null || dsId.length < 43) {
@@ -278,6 +283,32 @@ class DsHttpServer {
     } else {
       throw HttpStatus.UNAUTHORIZED;
     }
+  }
+
+  void handleIcon(HttpRequest request) {
+    var response = request.response;
+    response.deadline = const Duration(seconds: 15);
+
+    String path = request.uri.path;
+    String name = path.substring(6);
+
+    (nodeProvider as BrokerNodeProvider).getIconByName(name).then((ByteData data) {
+      if (data == null) {
+        response.statusCode = HttpStatus.NOT_FOUND;
+        response.writeln("Icon Not Found.");
+        response.close();
+        return;
+      }
+
+      response.add(data.buffer.asUint8List(
+        data.offsetInBytes,
+        data.lengthInBytes
+      ));
+      response.close();
+    }).catchError((e) {
+      response.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+      response.close();
+    });
   }
 
   void onLinkDisconnected(HttpServerLink link) {
