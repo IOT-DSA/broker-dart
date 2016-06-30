@@ -1,7 +1,24 @@
 part of dsbroker.broker;
 
 class BrokerSysGetIconNode extends BrokerNode {
-  BrokerSysGetIconNode(String path, BrokerNodeProvider provider) : super(path, provider);
+  BrokerSysGetIconNode(String path, BrokerNodeProvider provider) : super(path, provider) {
+    configs.addAll({
+      r"$name": "Get Icon",
+      r"$invokable": "read",
+      r"$params": [
+        {
+          "name": "Icon",
+          "type": "string"
+        }
+      ],
+      r"$columns": [
+        {
+          "name": "Data",
+          "type": "binary"
+        }
+      ]
+    });
+  }
 
   @override
   InvokeResponse invoke(
