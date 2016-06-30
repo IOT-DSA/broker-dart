@@ -207,6 +207,17 @@ class RemoteLinkRootListController extends ListController {
         } else if (name.startsWith('@')) {
           node.attributes[name] = value;
           changes.add(name);
+
+          if (node.attributes["@icon"] is String) {
+            String iconPath = node.attributes["@icon"];
+            if (!(iconPath.startsWith("http:") || iconPath.startsWith("https:"))) {
+              RemoteRequester r = requester;
+              BrokerNodeProvider np = r._linkManager.broker;
+              if (np.iconOwnerMappings[iconPath] is! String) {
+                np.iconOwnerMappings[iconPath] = r._linkManager.path;
+              }
+            }
+          }
         } else {
           changes.add(name);
           if (removed) {
