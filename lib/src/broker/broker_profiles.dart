@@ -79,12 +79,14 @@ Map<String, dynamic> brokerProfileMap = {
     },
     "dataRoot": {
       "addNode": {
+        r"$name": "Add Node",
         r"$invokable": "write",
         r"$params": [
           {"name": "Name", "type": "string"}
         ]
       },
       "addValue": {
+        r"$name": "Add Value",
         r"$invokable": "write",
         r"$params": [
           {"name": "Name", "type": "string"},
@@ -99,6 +101,7 @@ Map<String, dynamic> brokerProfileMap = {
         ]
       },
       "publish": {
+        r"$name": "Publish",
         r"$invokable": "write",
         r"$params": [
           {"name": "Path", "type": "string"},
