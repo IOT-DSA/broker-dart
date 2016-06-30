@@ -116,7 +116,7 @@ class DsHttpServer {
       if (request.method == "HEAD" || request.method == "OPTIONS") {
         var response = request.response;
 
-        if (!(const ["/conn", "/http", "/ws"].contains(request.uri.path))) {
+        if (!(const ["/conn", "/http", "/ws"].contains(request.uri.path)) && !request.uri.path.startsWith("/icon/")) {
           response.statusCode = HttpStatus.NOT_FOUND;
         }
 
@@ -139,7 +139,7 @@ class DsHttpServer {
         return;
       }
 
-      if (!(const ["/conn", "/http", "/ws"].contains(request.uri.path))) {
+      if (!(const ["/conn", "/http", "/ws"].contains(request.uri.path)) && !request.uri.path.startsWith("/icon/")) {
         updateResponseBeforeWrite(request, HttpStatus.NOT_FOUND, null, true);
         request.response.statusCode = HttpStatus.NOT_FOUND;
         request.response.writeln("Not Found.");

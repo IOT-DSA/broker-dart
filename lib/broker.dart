@@ -4,6 +4,7 @@ library dsbroker.broker;
 import "dart:async";
 import "dart:io";
 import "dart:convert";
+import "dart:typed_data";
 
 import "package:dslink/client.dart" show HttpClientLink, PrivateKey;
 import "package:dslink/responder.dart";
@@ -33,6 +34,7 @@ part "src/broker/stats.dart";
 part "src/broker/quarantine.dart";
 part "src/broker/upstream.dart";
 part "src/broker/config_node.dart";
+part "src/broker/icon.dart";
 
 part "src/http/server_link.dart";
 part "src/http/server.dart";

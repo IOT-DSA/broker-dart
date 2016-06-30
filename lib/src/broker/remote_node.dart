@@ -622,6 +622,17 @@ class RemoteLinkListController extends ListController {
             requester.nodeCache.updateRemoteChildNode(node, name, value);
           }
         }
+
+        if (node.attributes["@icon"] is String) {
+          String iconPath = node.attributes["@icon"];
+          if (!(iconPath.startsWith("http:") || iconPath.startsWith("https:"))) {
+            RemoteRequester r = requester;
+            BrokerNodeProvider np = r._linkManager.broker;
+            if (np.iconOwnerMappings[iconPath] is! String) {
+              np.iconOwnerMappings[iconPath] = r._linkManager.path;
+            }
+          }
+        }
       }
       if (request.streamStatus != StreamStatus.initialize) {
         node.listed = true;

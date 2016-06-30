@@ -31,6 +31,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   BrokerNode upstreamDataNode;
   BrokerNode quarantineNode;
   BrokerNode tokens;
+  Map<String, String> iconOwnerMappings = <String, String>{};
 
   BrokerConfigSetHandler setConfigHandler;
 
@@ -252,6 +253,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
     new AllowAllLinksNode("/sys/allowAllLinks", this);
     new EnableQuarantineNode("/sys/enableQuarantine", this);
+
+    setNode("/sys/getIcon", new BrokerSysGetIconNode("/sys/getIcon", this));
   }
 
   /// load a fixed profile map
@@ -1065,6 +1068,31 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (setConfigHandler != null) {
       setConfigHandler(name, value);
     }
+  }
+
+  Future<ByteData> getIconByName(String name) async {
+    String owner = iconOwnerMappings[name];
+    if (owner is String) {
+      RemoteLinkNode linkNode = getNode(owner);
+      if (linkNode != null && linkNode._linkManager != null && linkNode._linkManager.requester != null) {
+        await for (RequesterInvokeUpdate update in linkNode._linkManager.requester.invoke("/sys/getIcon", {
+          "Icon": name
+        }).timeout(const Duration(seconds: 10), onTimeout: (EventSink sink) {
+          sink.close();
+        })) {
+          if (update.streamStatus == StreamStatus.closed) {
+            List<List<dynamic>> rowData = update.rows;
+            if (rowData.length == 1) {
+              List row = rowData[0];
+              if (row.length == 1 && row[0] is ByteData) {
+                return row[0];
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   void saveBrokerNodeAttributes(BrokerNode node) {

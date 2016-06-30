@@ -60,6 +60,7 @@ class UserRootNode extends UserNode {
     profile = provider.getOrCreateNode('/defs/profile/broker/userRoot', false);
   }
 }
+
 InvokeResponse addUserChildNode(Map params, Responder responder,
     InvokeResponse response, LocalNode parentNode) {
   Object name = params['Name'];
