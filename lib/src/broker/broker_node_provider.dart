@@ -254,7 +254,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     new AllowAllLinksNode("/sys/allowAllLinks", this);
     new EnableQuarantineNode("/sys/enableQuarantine", this);
 
-    setNode("/sys/getIcon", new BrokerSysGetIconNode("/sys/getIcon", this));
+    nodes["/sys/getIcon"] = new BrokerSysGetIconNode("/sys/getIcon", this);
   }
 
   /// load a fixed profile map
