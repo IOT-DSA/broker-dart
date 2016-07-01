@@ -1075,6 +1075,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     var f = new File("brokerIcons/${rn}");
     
     if (await f.exists()) {
+      iconOwnerMappings.remove(name);
       return await ByteDataUtil.fromList(await f.readAsBytes());
     }
 
