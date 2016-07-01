@@ -628,9 +628,7 @@ class RemoteLinkListController extends ListController {
           if (!(iconPath.startsWith("http:") || iconPath.startsWith("https:"))) {
             RemoteRequester r = requester;
             BrokerNodeProvider np = r._linkManager.broker;
-            if (np.iconOwnerMappings[iconPath] is! String) {
-              np.iconOwnerMappings[iconPath] = r._linkManager.path;
-            }
+            np.iconOwnerMappings[iconPath] = r._linkManager.path;
           }
         }
       }
