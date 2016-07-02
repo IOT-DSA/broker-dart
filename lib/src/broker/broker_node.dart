@@ -76,6 +76,22 @@ class BrokerVersionNode extends BrokerStaticNode {
   }
 }
 
+/// Dart version node
+class DartVersionNode extends BrokerStaticNode {
+  DartVersionNode(String path, BrokerNodeProvider provider) :
+      super(path, provider) {
+    configs[r"$name"] = "Dart Version";
+    configs[r"$type"] = "string";
+    try {
+      var version = Platform.version;
+      version = version.substring(0, version.indexOf(" "));
+      updateValue(version);
+    } catch (e) {
+      updateValue(Platform.version);
+    }
+  }
+}
+
 /// Broker distribution node
 class BrokerDistNode extends BrokerStaticNode {
   BrokerDistNode(String path, BrokerNodeProvider provider, String dist) :

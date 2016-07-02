@@ -219,6 +219,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   void initSys() {
     new BrokerVersionNode("/sys/version", this, DSA_VERSION);
+    new DartVersionNode("/sys/dartVersion", this);
     new StartTimeNode("/sys/startTime", this);
     new BrokerDistNode("/sys/dist", this, BrokerGlobalConfig.BROKER_DIST);
     new ClearConnsAction("/sys/clearConns", this);
