@@ -563,7 +563,6 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
        parentNode.children[name] = node;
        node.parent = parentNode;
        parentNode.updateList(name);
-
      }
      return node;
   }
@@ -1074,7 +1073,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   Future<ByteData> getIconByName(String name) async {
     var rn = Uri.encodeComponent(name);
     var f = new File("brokerIcons/${rn}");
-    
+
     if (await f.exists()) {
       iconOwnerMappings.remove(name);
       return await ByteDataUtil.fromList(await f.readAsBytes());
@@ -1095,18 +1094,18 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
               List row = rowData[0];
               if (row.length == 1 && row[0] is ByteData) {
                 ByteData d = row[0];
-                
+
                 if (!(await f.exists())) {
                   await f.create(recursive: true);
                 }
-                
+
                 await f.writeAsBytes(d.buffer.asUint8List(
                   d.offsetInBytes,
                   d.lengthInBytes
                 ));
-                
+
                 iconOwnerMappings.remove(name);
-                
+
                 return d;
               }
             }

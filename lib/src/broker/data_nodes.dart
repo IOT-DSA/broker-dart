@@ -153,6 +153,97 @@ InvokeResponse _deleteDataNode(Map params, Responder responder,
   return response..close(DSError.INVALID_PARAMETER);
 }
 
+InvokeResponse _importDataNode(Map params, Responder responder,
+  InvokeResponse response, LocalNode parentNode) {
+
+  try {
+    String inputData = params["data"];
+    var json = JSON.decode(inputData);
+    if (json is Map) {
+      for (String child in parentNode.children.keys.toList()) {
+        var node = parentNode[child];
+        if (node is BrokerDataNode) {
+          removeDataNodeRecursive(node, child);
+        }
+      }
+
+      parentNode.attributes.clear();
+
+      void deserialize(Map d, LocalNode n) {
+        for (String key in d.keys) {
+          if (key == r"$is") {
+            continue;
+          } else if (key.startsWith(r"$")) {
+            n.configs[key] = d[key];
+          } else if (key.startsWith(r"@")) {
+            n.attributes[key] = d[key];
+          } else if (key == "?value") {
+            n.updateValue(d[key]);
+            if (n is BrokerDataNode) {
+              n.storage.setValue(d[key]);
+            }
+          } else if (d[key] is Map) {
+            var m = d[key];
+            var node = (parentNode.provider as BrokerNodeProvider)._getOrCreateDataNode(
+              "${parentNode.path}/${key}"
+            );
+            deserialize(m, node);
+            n.addChild(key, node);
+            node.parent = n;
+          }
+          n.listChangeController.add(key);
+        }
+      }
+
+      deserialize(json, parentNode);
+
+      DsTimer.timerOnceBefore(
+        (responder.nodeProvider as BrokerNodeProvider).saveDataNodes, 1000);
+      return response..close();
+    }
+    throw new Exception("Invalid JSON Data.");
+  } catch (e, stack) {
+    return response..close(
+      new DSError("invokeError", msg: e.toString(), detail: stack.toString())
+    );
+  }
+
+  return response..close();
+}
+
+InvokeResponse _exportDataNode(Map params, Responder responder,
+  InvokeResponse response, LocalNode parentNode) {
+  void serialize(LocalNode node, Map<String, dynamic> map) {
+    for (String attr in node.attributes.keys) {
+      map[attr] = node.getAttribute(attr);
+    }
+
+    for (String cfg in node.configs.keys) {
+      map[cfg] = node.getConfig(cfg);
+    }
+
+    for (String cn in node.children.keys) {
+      LocalNode child = node.children[cn];
+      if (child.configs[r"$is"] == "broker/dataNode") {
+        serialize(child, map[cn] = {});
+      }
+    }
+
+    if (node.value != null) {
+      map["?value"] = node.value;
+    }
+  }
+
+  var map = {};
+  serialize(parentNode, map);
+  String encoded = JSON.encode(map);
+
+  response.updateStream([
+    [encoded]
+  ]);
+  return response..close();
+}
+
 InvokeResponse _renameDataNode(Map params, Responder responder,
   InvokeResponse response, LocalNode parentNode) {
   Object name = params['Name'];
@@ -285,12 +376,16 @@ final Map<String, dynamic> _dataNodeFunctions = <String, dynamic>{
       "addValue": _addDataNode,
       "deleteNode": _deleteDataNode,
       "renameNode": _renameDataNode,
-      "duplicateNode": _duplicateDataNode
+      "duplicateNode": _duplicateDataNode,
+      "exportNode": _exportDataNode,
+      "importNode": _importDataNode
     },
     "dataRoot": {
       "addNode": _addDataNode,
       "addValue": _addDataNode,
-      "publish": _publishDataNode
+      "publish": _publishDataNode,
+      "exportNode": _exportDataNode,
+      "importNode": _importDataNode
     },
   }
 };
