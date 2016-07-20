@@ -6,6 +6,8 @@ import "dart:io";
 import "dart:convert";
 import "dart:typed_data";
 
+import "package:dslink/nodes.dart";
+
 import "package:dslink/client.dart" show HttpClientLink, PrivateKey;
 import "package:dslink/responder.dart";
 import "package:dslink/requester.dart";

@@ -84,9 +84,11 @@ InvokeResponse _addDataNode(Map params, Responder responder,
     parentNode.parent != null && // make sure parent node itself is in tree
     name is String &&
     name != '' &&
-    !name.contains(Path.invalidNameChar) &&
     !name.startsWith(r'$') &&
     !name.startsWith(r'!')) {
+    String displayName = name;
+    name = NodeNamer.createName(name);
+
     if (parentNode.children.containsKey(name)) {
       return response
         ..close(new DSError('invalidParameter', msg: 'node already exist'));
@@ -106,6 +108,9 @@ InvokeResponse _addDataNode(Map params, Responder responder,
       node.configs[r'$type'] = type;
       if (editor is String) {
         node.configs[r'$editor'] = editor;
+      }
+      if (name != displayName) {
+        node.configs[r"$name"] = displayName;
       }
       node.updateValue(null);
     }
@@ -247,12 +252,23 @@ InvokeResponse _exportDataNode(Map params, Responder responder,
 InvokeResponse _renameDataNode(Map params, Responder responder,
   InvokeResponse response, LocalNode parentNode) {
   Object name = params['Name'];
+  var displayName = name;
+
+  if (name is String) {
+    name = NodeNamer.createName(name);
+  }
+
   if (parentNode is BrokerDataNode &&
     parentNode is! BrokerDataRoot &&
     parentNode.parent != null && // make sure parent node itself is in tree
     name is String && name != '' && !parentNode.children.containsKey(name)
   ) {
     cloneNodes(parentNode, parentNode.parent, name);
+
+    if (displayName != name) {
+      parentNode.configs[r"$name"] = displayName;
+    }
+
     removeDataNodeRecursive(parentNode,
           parentNode.path.substring(parentNode.path.lastIndexOf('/') + 1));
     DsTimer.timerOnceBefore(
