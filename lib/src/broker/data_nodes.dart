@@ -190,7 +190,7 @@ InvokeResponse _importDataNode(Map params, Responder responder,
           } else if (d[key] is Map) {
             var m = d[key];
             var node = (parentNode.provider as BrokerNodeProvider)._getOrCreateDataNode(
-              "${parentNode.path}/${key}"
+              "${n.path}/${key}"
             );
             deserialize(m, node);
             n.addChild(key, node);
