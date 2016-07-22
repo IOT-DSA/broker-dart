@@ -173,6 +173,7 @@ InvokeResponse _importDataNode(Map params, Responder responder,
       }
 
       parentNode.attributes.clear();
+      parentNode.updateValue(null);
 
       void deserialize(Map d, LocalNode n) {
         for (String key in d.keys) {
@@ -185,7 +186,9 @@ InvokeResponse _importDataNode(Map params, Responder responder,
           } else if (key == "?value") {
             n.updateValue(d[key]);
             if (n is BrokerDataNode) {
-              n.storage.setValue(d[key]);
+              if (n.storage != null) {
+                n.storage.setValue(d[key]);
+              }
             }
           } else if (d[key] is Map) {
             var m = d[key];
