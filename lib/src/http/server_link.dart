@@ -59,7 +59,7 @@ class HttpServerLink implements ServerLink {
 
   HttpServerLink(String id, this.publicKey, ServerLinkManager linkManager,
       {NodeProvider nodeProvider,
-      this.session, this.token, bool isReadOnly: false,
+      this.session, this.token, int maxPermission: Permission.CONFIG,
       this.enableTimeout: false, this.enableAck: true, this.onDisconnect, bool trusted: false})
       : dsId = id {
       path = linkManager.getLinkPath(id, token);
@@ -67,9 +67,7 @@ class HttpServerLink implements ServerLink {
         requester = linkManager.getRequester(id);
         if (nodeProvider != null){
           responder = linkManager.getResponder(id, nodeProvider, session, trusted);
-          if (isReadOnly) {
-            responder.isReadOnly = true;
-          }
+          responder.maxPermission = maxPermission;
         }
       }
 

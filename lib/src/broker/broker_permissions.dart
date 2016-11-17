@@ -142,14 +142,11 @@ class BrokerPermissions implements IPermissionManager {
           rslt = p;
         }
       }
-      if (resp.isReadOnly && rslt > Permission.READ) {
-        return Permission.READ;
+      if (rslt > resp.maxPermission) {
+        return resp.maxPermission;
       }
       return rslt;
     }
-    if (resp.isReadOnly) {
-      return Permission.READ;
-    }
-    return Permission.CONFIG;
+    return resp.maxPermission;
   }
 }
