@@ -28,13 +28,6 @@ dsbroker
 pub global run broker_dart:broker
 ```
 
-To connect a broker to another broker:
-
-```bash
-# Connect a broker to another broker
-dsbroker --broker http://my.broker.org:8080/conn
-```
-
 You can edit the server configuration using `broker.json`. For more information about broker configuration, see
 [Configuring a Broker](https://github.com/IOT-DSA/broker-dart/wiki).
 
