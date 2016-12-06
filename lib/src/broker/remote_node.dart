@@ -518,6 +518,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
 
   /// initialization of override attributes
   void updateOverrideAttributes(Map m) {
+    if (m == null) return;
     overrideAttributes = m;
     m.forEach((key,val) {
       attributes[key] = val;
