@@ -224,6 +224,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     new BrokerDistNode("/sys/dist", this, BrokerGlobalConfig.BROKER_DIST);
     new ClearConnsAction("/sys/clearConns", this);
     new UpdatePermissionAction("/sys/updatePermissions", this);
+    new GetPermissionAction("/sys/getPermissions", this);
 
     throughput.initNodes(this);
     upstream = new UpstreamNode("/sys/upstream", this);
