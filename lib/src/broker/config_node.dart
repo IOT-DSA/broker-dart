@@ -1,10 +1,13 @@
 part of dsbroker.broker;
 
 class UpdateDefaultPermission extends BrokerStaticNode {
+  static UpdateDefaultPermission instance;
+
   List params;
 
   UpdateDefaultPermission(String path, BrokerNodeProvider provider)
     : super(path, provider) {
+    instance = this;
     params = [
       {
         "name": "Data",

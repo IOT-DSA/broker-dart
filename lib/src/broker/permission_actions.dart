@@ -99,7 +99,12 @@ class UpdatePermissionAction extends BrokerStaticNode {
       String path = params["Path"];
       int permission = provider.permissions.getPermission(path, responder);
       if (permission == Permission.CONFIG) {
-
+        if (path == '' || path == '/') {
+          UpdateDefaultPermission.instance.updateData(permissions);
+          provider.updateDefaultGroups(permissions);
+          provider.updateConfigValue("defaultPermission", permissions);
+          return response..close();
+        }
         if (permissions == null) {
           LocalNode node = provider.getNode(path);
           if (node is BrokerNode) {
