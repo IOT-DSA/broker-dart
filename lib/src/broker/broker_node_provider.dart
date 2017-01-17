@@ -40,7 +40,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   List _pendingConfigChanges;
   void logConfigMessage(String str, Responder responder){
     if (_pendingConfigChanges == null) {
-      _pendingConfigChanges = [];
+      _pendingConfigChanges = [''];// add a new line in the top
       new Timer(new Duration(milliseconds: 10), (){
         new File('logs/config_change.log').writeAsString(_pendingConfigChanges.join('\n'), mode: FileMode.APPEND);
         _pendingConfigChanges = null;
@@ -1091,10 +1091,10 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     return new BrokerResponder(this, dsId);
   }
 
-  void updateConfigValue(String name, dynamic oldValue, dynamic value, Responder responder) {
+  void updateConfigValue(String name, dynamic oldValue, dynamic newValue, Responder responder) {
     if (setConfigHandler != null) {
-      logConfigMessage("changes config: $name, from: ${gconfig.quarantine}, to: ${value}", responder);
-      setConfigHandler(name, value);
+      logConfigMessage("changes config: $name, from: $oldValue, to: $newValue", responder);
+      setConfigHandler(name, newValue);
     }
   }
 

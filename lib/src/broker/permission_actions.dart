@@ -102,7 +102,7 @@ class UpdatePermissionAction extends BrokerStaticNode {
         if (path == '' || path == '/') {
           UpdateDefaultPermission.instance.updateData(permissions);
           provider.updateDefaultGroups(permissions);
-          provider.updateConfigValue("defaultPermission", permissions);
+          provider.updateConfigValue("defaultPermission", '', permissions, responder);
           return response..close();
         }
         if (permissions == null) {

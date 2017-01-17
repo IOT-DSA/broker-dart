@@ -98,6 +98,7 @@ class AuthorizeDSLinkAction extends BrokerStaticNode {
         if (group != null && group != '') {
           provider.getOrCreateNode(connPath, false).configs[r'$$group'] = group;
         }
+        provider.logConfigMessage('authorize dsId $dsId with group:$group', responder);
       }
     } else {
       return response..close(DSError.INVALID_PARAMETER);
@@ -151,6 +152,8 @@ class KickDSLinkAction extends BrokerStaticNode {
         manager.inTree = false;
 
         provider.connsNode.updateList(name);
+
+        provider.logConfigMessage('kick dslink $fullId $name', responder);
 
         DsTimer.timerOnceBefore(provider.saveConns, 300);
       }

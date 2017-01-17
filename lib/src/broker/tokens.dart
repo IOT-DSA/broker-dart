@@ -253,6 +253,7 @@ InvokeResponse _deleteTokenNode(Map params, Responder responder,
     InvokeResponse response, LocalNode parentNode) {
   if (parentNode is TokenNode) {
     parentNode.delete();
+    parentNode.provider.logConfigMessage('delete token: ${parentNode.token}', responder);
     return response..close();
   }
   return response..close(DSError.INVALID_PARAMETER);
@@ -285,6 +286,7 @@ InvokeResponse _addTokenNode(Map params, Responder responder,
     ], streamStatus: StreamStatus.closed);
     DsTimer.timerOnceBefore(
         (responder.nodeProvider as BrokerNodeProvider).saveTokensNodes, 1000);
+    node.provider.logConfigMessage('add new token: $token', responder);
     return response;
   }
   return response..close(DSError.INVALID_PARAMETER);

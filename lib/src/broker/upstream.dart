@@ -192,6 +192,7 @@ class CreateUpstreamBrokerNode extends BrokerNode {
     UpstreamNode b = provider.getOrCreateNode("/sys/upstream", false) as UpstreamNode;
     b.addUpstreamConnection(name, url, ourName, token, group);
     provider.upstream.update();
+    provider.logConfigMessage('add upstream $url $name', responder);
     return response..close();
   }
 }
@@ -214,6 +215,7 @@ class DeleteUpstreamConnectionNode extends BrokerNode {
     var b = provider.getOrCreateNode("/sys/upstream", false) as UpstreamNode;
     b.removeUpstreamConnection(name);
     provider.upstream.update();
+    provider.logConfigMessage('delete upstream $name', responder);
     return response..close();
   }
 }
