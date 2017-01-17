@@ -63,7 +63,7 @@ class UpdateDefaultPermission extends BrokerStaticNode {
       }
       updateData(json);
       provider.updateDefaultGroups(json);
-      provider.updateConfigValue("defaultPermission", json);
+      provider.updateConfigValue("defaultPermission", json, responder);
     } else {
       return response..close(DSError.INVALID_PARAMETER);
     }
@@ -88,7 +88,7 @@ class AllowAllLinksNode extends BrokerStaticNode {
 
     if (value != provider.acceptAllConns) {
       provider.acceptAllConns = value;
-      provider.updateConfigValue("allowAllLinks", value);
+      provider.updateConfigValue("allowAllLinks", value, responder);
     }
 
     return super.setValue(value, responder, response, maxPermission);
@@ -112,7 +112,7 @@ class EnableQuarantineNode extends BrokerStaticNode {
 
     if (value != provider.enabledQuarantine) {
       provider.enabledQuarantine = value;
-      provider.updateConfigValue("quarantine", value);
+      provider.updateConfigValue("quarantine", value, responder);
     }
 
     return super.setValue(value, responder, response, maxPermission);

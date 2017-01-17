@@ -1,6 +1,6 @@
 part of dsbroker.broker;
 
-typedef void BrokerConfigSetHandler<T>(String name, T value);
+typedef void BrokerConfigSetHandler(String name, Object value);
 
 class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   /// map that holds all nodes
@@ -34,6 +34,32 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   Map<String, String> iconOwnerMappings = <String, String>{};
 
   BrokerConfigSetHandler setConfigHandler;
+
+  static bool secureMode;
+
+  List _pendingConfigChanges;
+  void logConfigMessage(String str, Responder responder){
+    if (_pendingConfigChanges == null) {
+      _pendingConfigChanges = [];
+      new Timer(new Duration(milliseconds: 10), (){
+        new File('logs/config_change.log').writeAsString(_pendingConfigChanges.join('\n'), mode: FileMode.APPEND);
+        _pendingConfigChanges = null;
+      });
+    }
+    String msg = '[${new DateTime.now()}] ';
+    if (responder != null) {
+      String user = responder.groups.firstWhere((str) => str.startsWith("user/"));
+      if (user != null) {
+        if (user.length > 20) {
+          user = user.substring(20);
+        }
+        msg += '$user, ';
+      }
+    }
+    msg += str;
+    _pendingConfigChanges.add(msg);
+  }
+
 
   String uid;
 
@@ -1065,8 +1091,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     return new BrokerResponder(this, dsId);
   }
 
-  void updateConfigValue(String name, dynamic value) {
+  void updateConfigValue(String name, dynamic oldValue, dynamic value, Responder responder) {
     if (setConfigHandler != null) {
+      logConfigMessage("changes config: $name, from: ${gconfig.quarantine}, to: ${value}", responder);
       setConfigHandler(name, value);
     }
   }
