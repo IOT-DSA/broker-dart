@@ -284,6 +284,10 @@ InvokeResponse _renameDataNode(Map params, Responder responder,
 InvokeResponse _duplicateDataNode(Map params, Responder responder,
   InvokeResponse response, LocalNode parentNode) {
   Object name = params['Name'];
+  if (name is String) {
+    name = NodeNamer.createName(name);
+  }
+
   if (parentNode is BrokerDataNode &&
     parentNode is! BrokerDataRoot &&
     parentNode.parent != null && // make sure parent node itself is in tree
