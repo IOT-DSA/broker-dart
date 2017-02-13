@@ -47,8 +47,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       });
     }
     String msg = '[${new DateTime.now()}] ';
-    if (responder != null) {
-      String user = responder.groups.firstWhere((str) => str.startsWith("user/"));
+    if (responder != null && responder.groups != null) {
+      String user = responder.groups.firstWhere((str) => str.startsWith("user/"), orElse:()=>null);
       if (user != null) {
         if (user.length > 20) {
           user = user.substring(20);
