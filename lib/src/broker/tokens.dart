@@ -247,6 +247,24 @@ class TokenNode extends BrokerNode {
     }
     links = null;
   }
+
+  void updateLinks() {
+    if (links == null) return;
+
+    var updated = false;
+    for (Object path in links) {
+      if (path is! String) continue;
+      Object nd = provider.getNode(path as String);
+      if (nd is! RemoteLinkRootNode) continue;
+      (nd as RemoteLinkRootNode).configs[r'$$group'] = group;
+      (nd as RemoteLinkRootNode).updateList(r'$$group');
+      updated = true;
+    }
+
+    if (updated) {
+      DsTimer.timerOnceBefore(provider.saveConns, 300);
+    }
+  }
 }
 
 InvokeResponse _deleteTokenNode(Map params, Responder responder,
@@ -257,6 +275,31 @@ InvokeResponse _deleteTokenNode(Map params, Responder responder,
     return response..close();
   }
   return response..close(DSError.INVALID_PARAMETER);
+}
+
+InvokeResponse _updateTokenNode(Map params, Responder responder,
+    InvokeResponse response, LocalNode parentNode) {
+  if (parentNode is! TokenNode) {
+    return response..close(DSError.INVALID_PARAMETER);
+  }
+
+  var group = params['Group'] as String;
+  if (group == null || group.isEmpty) {
+    return response..close(DSError.INVALID_PARAMETER);
+  }
+
+  var node = parentNode as TokenNode;
+  node..configs[r'$$group'] = group
+      ..group = group
+      ..updateList(r'$$group')
+      ..updateLinks();
+
+  DsTimer.timerOnceBefore(
+      (responder.nodeProvider as BrokerNodeProvider).saveTokensNodes, 1000);
+  node.provider.logConfigMessage(
+      'updated token: ${node.token} to group: $group',
+      responder);
+  return response..close();
 }
 
 InvokeResponse _addTokenNode(Map params, Responder responder,
@@ -295,7 +338,8 @@ InvokeResponse _addTokenNode(Map params, Responder responder,
 final Map<String, dynamic> _tokenNodeFunctions = <String, dynamic>{
   "broker": {
     "token": {
-      "delete": _deleteTokenNode
+      "delete": _deleteTokenNode,
+      "update": _updateTokenNode
     },
     "tokenGroup": {
       "add": _addTokenNode

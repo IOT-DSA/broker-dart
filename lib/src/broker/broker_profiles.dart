@@ -178,6 +178,17 @@ Map<String, dynamic> brokerProfileMap = {
         r"$name": "Delete",
         r"$invokable": "config",
         r"$params": []
+      },
+      "update": {
+        r'$name': 'Update Group',
+        r'$invokable': 'config',
+        r'$params': [
+          {
+            'name': 'Group',
+            'type': 'string',
+            'description': 'default permission group'
+          }
+        ]
       }
     },
     "tokenGroup": {
