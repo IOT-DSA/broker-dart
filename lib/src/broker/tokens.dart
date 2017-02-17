@@ -250,12 +250,19 @@ class TokenNode extends BrokerNode {
 
   void updateLinks() {
     if (links == null) return;
+
+    var updated = false;
     for (Object path in links) {
       if (path is! String) continue;
       Object nd = provider.getNode(path as String);
       if (nd is! RemoteLinkRootNode) continue;
       (nd as RemoteLinkRootNode).configs[r'$$group'] = group;
       (nd as RemoteLinkRootNode).updateList(r'$$group');
+      updated = true;
+    }
+
+    if (updated) {
+      DsTimer.timerOnceBefore(provider.saveConns, 300);
     }
   }
 }
