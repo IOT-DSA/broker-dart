@@ -98,9 +98,9 @@ main(List<String> _args) async {
   updateLogLevel(getConfig("logLevel", "info"));
   var downstreamName = getConfig("downstreamName", "downstream");
   var allowAll = getConfig("allowAllLinks", true);
-  var quarentine = getConfig("quarantine", false);
+  var quarantine = getConfig("quarantine", false);
   broker = new BrokerNodeProvider(
-      enabledQuarantine: quarentine,
+      enabledQuarantine: quarantine,
       acceptAllConns: allowAll,
       downstreamName: downstreamName);
 
