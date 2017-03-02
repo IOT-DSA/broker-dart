@@ -97,7 +97,12 @@ main(List<String> _args) async {
 
   updateLogLevel(getConfig("logLevel", "info"));
   var downstreamName = getConfig("downstreamName", "downstream");
-  broker = new BrokerNodeProvider(downstreamName: downstreamName);
+  var allowAll = getConfig("allowAllLinks", true);
+  var quarentine = getConfig("quarantine", false);
+  broker = new BrokerNodeProvider(
+      enabledQuarantine: quarentine,
+      acceptAllConns: allowAll,
+      downstreamName: downstreamName);
 
   int httpsPort = getConfig("httpsPort", 8443);
   String sslCertificatePath = getConfig("sslCertificatePath", "");
