@@ -253,6 +253,12 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
 
   String get disconnected => _linkManager.disconnected;
 
+  List getDisconnectedListResponse() {
+    return [
+      [r'$disconnectedTs', disconnected]
+    ];
+  }
+
   bool _valueReady = false;
 
   /// whether broker is already subscribing, can send value directly for new subscribe request

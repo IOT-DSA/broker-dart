@@ -71,6 +71,16 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
     listChangeController.add(name);
   }
 
+  List getDisconnectedListResponse() {
+    List rslt = [
+      [r'$disconnectedTs', disconnected]
+    ];
+    if (configs.containsKey(r'$$group')) {
+      rslt.add([r'$$group', configs[r'$$group']]);
+    }
+    return rslt;
+  }
+
   void resetNodeCache() {
     children.clear();
     configs.remove(r'$disconnectedTs');
