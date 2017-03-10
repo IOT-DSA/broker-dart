@@ -183,23 +183,48 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
 
   Map<Function, int> callbacks = new Map<Function, int>();
 
+  int lastQos = -1;
+
+  void updateSubscriptionQos () {
+    int checkQos = 0;
+    callbacks.forEach((callback, qos) {
+      checkQos |= qos;
+    });
+    if (checkQos != lastQos) {
+      lastQos = checkQos;
+      _linkManager.requester.subscribe(remotePath, updateValue, lastQos);
+    }
+  }
+
   RespSubscribeListener subscribe(callback(ValueUpdate), [int qos = 0]) {
     callbacks[callback] = qos;
     var rslt = new RespSubscribeListener(this, callback);
     if (valueReady) {
       callback(_lastValueUpdate);
     }
-    _linkManager.requester.subscribe(remotePath, updateValue, qos);
+    if (lastQos == -1) {
+      lastQos = qos;
+      _linkManager.requester.subscribe(remotePath, updateValue, qos);
+    } else if (lastQos | qos != lastQos) {
+      lastQos = lastQos | qos;
+      _linkManager.requester.subscribe(remotePath, updateValue, lastQos);
+    }
+
     return rslt;
   }
 
   void unsubscribe(callback(ValueUpdate)) {
+    int removedQos = -1;
     if (callbacks.containsKey(callback)) {
+      removedQos = callbacks[callback];
       callbacks.remove(callback);
     }
     if (callbacks.isEmpty) {
       _linkManager.requester.unsubscribe(remotePath, updateValue);
       _valueReady = false;
+      lastQos = -1;
+    } else if (removedQos > 0) {
+      updateSubscriptionQos();
     }
   }
 
