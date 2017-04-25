@@ -188,7 +188,9 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
   void updateSubscriptionQos () {
     int checkQos = 0;
     callbacks.forEach((callback, qos) {
-      checkQos |= qos;
+      if (qos > checkQos) {
+        checkQos = qos;
+      }
     });
     if (checkQos != lastQos) {
       lastQos = checkQos;
@@ -202,12 +204,9 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     if (valueReady) {
       callback(_lastValueUpdate);
     }
-    if (lastQos == -1) {
+    if ( qos > lastQos) {
       lastQos = qos;
       _linkManager.requester.subscribe(remotePath, updateValue, qos);
-    } else if (lastQos | qos != lastQos) {
-      lastQos = lastQos | qos;
-      _linkManager.requester.subscribe(remotePath, updateValue, lastQos);
     }
 
     return rslt;
@@ -223,7 +222,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
       _linkManager.requester.unsubscribe(remotePath, updateValue);
       _valueReady = false;
       lastQos = -1;
-    } else if (removedQos > 0) {
+    } else if (removedQos == lastQos) {
       updateSubscriptionQos();
     }
   }
