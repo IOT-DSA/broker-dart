@@ -170,6 +170,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     ]);
 
     permissions.root = root;
+
+    new Timer.periodic(new Duration(minutes:30), clearRemoteNodes);
   }
 
   void updateDefaultGroups(List list) {
@@ -1154,5 +1156,17 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     for (BaseLink link in _links.values) {
       link.close();
     }
+  }
+
+  void clearRemoteNodes([Timer t = null]) {
+    conns.forEach((key, RemoteLinkManager m){
+      for (String key in m.nodes.keys.toList()) {
+        RemoteLinkNode node = m.nodes[key];
+        if (node._listReqListener == null && node.callbacks.isEmpty && !(node is RemoteLinkRootNode)) {
+          nodes.remove(node.path);
+          m.nodes.remove(key);
+        }
+      }
+    });
   }
 }

@@ -170,6 +170,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
     if (_listReqListener != null) {
       _listReqListener.cancel();
       _listReqListener = null;
+      children.clear();
     }
     _listReady = false;
   }
