@@ -29,7 +29,12 @@ class UpdateDefaultPermission extends BrokerStaticNode {
     sb.write('[\n');
     bool first = true;
     if (defaultPermission != null) {
+      bool configFound = false;
       for (List row in defaultPermission) {
+        if (row[0] == ':config'){
+          configFound = true;
+          row[1] = 'config';
+        }
         if (first) {
           first = false;
           sb.write('  ["${row[0]}","${row[1]}"]');
@@ -37,7 +42,13 @@ class UpdateDefaultPermission extends BrokerStaticNode {
           sb.write(',\n  ["${row[0]}","${row[1]}"]');
         }
       }
+      if (!configFound) {
+        defaultPermission = [[':config','config']]..addAll(defaultPermission);
+        updateData(defaultPermission);
+        return;
+      }
     }
+
     sb.write('\n]');
     params[0] = {
       "name": "Data",
