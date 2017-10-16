@@ -189,6 +189,16 @@ class CreateUpstreamBrokerNode extends BrokerNode {
     var url = params["Url"];
     var token = params["Token"];
     var group = params["Group"];
+
+    try {
+      Uri.parse(url);
+    } catch (e, s) {
+      var err = DSError.INVALID_VALUE;
+      err.msg = e.toString();
+      err.detail = s.toString();
+      return response..close(err);
+    }
+
     UpstreamNode b = provider.getOrCreateNode("/sys/upstream", false) as UpstreamNode;
     b.addUpstreamConnection(name, url, ourName, token, group);
     provider.upstream.update();
