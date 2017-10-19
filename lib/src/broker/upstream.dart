@@ -240,6 +240,15 @@ class UpstreamUrlNode extends BrokerNode {
       var p = new Path(path).parentPath;
       UpstreamBrokerNode un = provider.getOrCreateNode(p, false);
 
+      try {
+        Uri.parse(value.toString());
+      } catch (e, s) {
+        var err = DSError.INVALID_VALUE;
+        err.msg = e.toString();
+        err.detail = s.toString();
+        return response..close(err);
+      }
+
       un.provider.removeLink(un.link, "@upstream@${un.name}", force: true);
       un.stop();
 
