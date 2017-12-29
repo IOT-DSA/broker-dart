@@ -443,7 +443,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     });
     File dataFile = new File("data.json");
     if (shouldSaveFiles) {
-      await safeWriteAsString(dataFile, DsJson.encode(m));
+      await safeWriteAsString(dataFile, DsJson.encode(m), verifyJson: true);
     }
     return m;
   }
@@ -487,7 +487,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     });
     File connsFile = new File("conns.json");
     if (shouldSaveFiles) {
-      await safeWriteAsString(connsFile, DsJson.encode(m));
+      await safeWriteAsString(connsFile, DsJson.encode(m), verifyJson: true);
     }
     kickDslinkAction.updateNames(names);
     updateGroupAction.updateNames(names);
