@@ -84,7 +84,7 @@ class DsHttpServer {
 
     if (httpsPort > 0 && sslContext is SecurityContext) {
       futures.add(HttpServer.bindSecure(address, httpsPort, sslContext).then((HttpServer server) {
-        logger.info("Listening on HTTP port $httpsPort");
+        logger.info("Listening on HTTPS port $httpsPort");
         server.listen(_handleRequest);
         httpsServer = server;
       }));
