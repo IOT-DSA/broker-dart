@@ -49,6 +49,9 @@ class BrokerGlobalConfig {
   static String BROKER_DIST = "dart";
 }
 
+typedef String BrokerLoadPrivateKey();
+typedef void BrokerSavePrivateKey(String key);
+
 Future<DsHttpServer> startBrokerServer(int port, {
   bool persist: true,
   BrokerNodeProvider broker,
@@ -80,15 +83,25 @@ Future<DsHttpServer> startBrokerServer(int port, {
   return server;
 }
 
+BrokerLoadPrivateKey loadPrivateKeyHandler;
+BrokerSavePrivateKey savePrivateKeyHandler;
+
 PrivateKey loadBrokerPrivateKey({bool save: true}) {
   File keyFile = new File(".dslink.key");
   PrivateKey privateKey;
   String key;
 
   try {
-    key = keyFile.readAsStringSync();
+    if (loadPrivateKeyHandler != null) {
+      key = loadPrivateKeyHandler();
+    } else {
+      key = keyFile.readAsStringSync();
+    }
+
     privateKey = new PrivateKey.loadFromString(key);
-  } catch (err) {}
+  } catch (e, stack) {
+    logger.fine("Failed to load broker private key.", e, stack);
+  }
 
   if (key == null || key.length != 131) {
     // 43 bytes d, 87 bytes Q, 1 space
@@ -115,7 +128,10 @@ PrivateKey loadBrokerPrivateKey({bool save: true}) {
     }
     privateKey = new PrivateKey.generateSync();
     key = privateKey.saveToString();
-    if (save == true) {
+
+    if (savePrivateKeyHandler != null) {
+      savePrivateKeyHandler(key);
+    } else if (save == true) {
       keyFile.writeAsStringSync(key);
     }
   }

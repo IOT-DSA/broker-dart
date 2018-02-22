@@ -402,6 +402,10 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         m = DsJson.decode(data);
       }
 
+      if (m == null) {
+        return;
+      }
+
       List names = [];
       m.forEach((String name, Map m) {
         String path = "$downstreamNameSS$name";
@@ -467,6 +471,10 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     }
 
     try {
+      if (m == null) {
+        return;
+      }
+
       m.forEach((String name, Map m) {
         String path = "/data/$name";
         BrokerDataNode node = getOrCreateNode(path, true);

@@ -91,6 +91,7 @@ Map<String, String> getDefaultEnvironment() {
   env["BROKER_PORT"] = "8080";
   env["BROKER_ALLOW_ALL_LINKS"] = "true";
   env["BROKER_ENABLE_QUARANTINE"] = "false";
+  env["BROKER_LOG_LEVEL"] = "info";
   return env;
 }
 
@@ -102,33 +103,43 @@ main(List<String> args) async {
   fullEnvironment.addAll(getDefaultEnvironment());
   fullEnvironment.addAll(Platform.environment);
 
+  updateLogLevel(fullEnvironment["BROKER_LOG_LEVEL"]);
+
   var broker = new BrokerNodeProvider(
     enabledQuarantine: getBooleanEnv("BROKER_ENABLE_QUARANTINE"),
     acceptAllConns: getBooleanEnv("BROKER_ALLOW_ALL_LINKS", true),
     downstreamName: "downstream"
   );
 
+  broker.loadHandler = (key) async {
+    return {};
+  };
+
+  broker.saveHandler = (key, value) async {
+  };
+
+  broker.setConfigHandler = (key, value) {
+    logger.warning(
+        "Broker attempted to set '${key}', but this is"
+            " not supported in a Docker configuration."
+    );
+  };
+
   new DsHttpServer.start(
     fullEnvironment["BROKER_HOST"],
     httpPort: getIntegerEnv("BROKER_PORT", 8080),
     nodeProvider: broker,
     linkManager: broker,
-    sslContext: SecurityContext.defaultContext
+    sslContext: SecurityContext.defaultContext,
+    shouldSaveFiles: false
   );
 
   await broker.loadAll();
 
-  broker.setConfigHandler = (key, value) {
-    logger.warning(
-      "Broker attempted to set '${key}', but this is"
-      " not supported in a Docker configuration."
-    );
-  };
-
   broker.upstream.onUpdate = (map) async {
     logger.warning(
-      "Broker attempted to update upstreams, but this is"
-        " not supported in a Docker configuration."
+        "Broker attempted to update upstreams, but this is"
+            " not supported in a Docker configuration."
     );
   };
 
