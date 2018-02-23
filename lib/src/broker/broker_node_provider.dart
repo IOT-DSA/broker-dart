@@ -1,6 +1,8 @@
 part of dsbroker.broker;
 
 typedef void BrokerConfigSetHandler(String name, Object value);
+typedef Future BrokerSaveHandler(String name, Object data);
+typedef Future<Object> BrokerLoadHandler(String name);
 
 class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   /// map that holds all nodes
@@ -35,6 +37,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
   BrokerConfigSetHandler setConfigHandler;
 
+  BrokerSaveHandler saveHandler;
+  BrokerLoadHandler loadHandler;
+
   static bool secureMode;
 
   List _pendingConfigChanges;
@@ -42,7 +47,10 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     if (_pendingConfigChanges == null) {
       _pendingConfigChanges = [''];// add a new line in the top
       new Timer(new Duration(milliseconds: 10), (){
-        new File('logs/config_change.log').writeAsString(_pendingConfigChanges.join('\n'), mode: FileMode.APPEND);
+        new File('logs/config_change.log').writeAsString(
+            _pendingConfigChanges.join('\n') + '\n',
+            mode: FileMode.APPEND
+        );
         _pendingConfigChanges = null;
       });
     }
@@ -307,8 +315,15 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
 
     File connsFile = new File("defs.json");
     try {
-      String data = await connsFile.readAsString();
-      Map m = DsJson.decode(data);
+      Map m;
+
+      if (loadHandler != null) {
+        m = await loadHandler("defs");
+      } else {
+        String data = await connsFile.readAsString();
+        m = DsJson.decode(data);
+      }
+
       m.forEach((String name, Map m) {
         String path = "/defs/$name";
         DefinitionNode node = getOrCreateNode(path, false);
@@ -335,8 +350,15 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   loadUserNodes() async {
     File connsFile = new File("usernodes.json");
     try {
-      String data = await connsFile.readAsString();
-      Map m = DsJson.decode(data);
+      Map m;
+
+      if (loadHandler != null) {
+        m = await loadHandler("usernodes");
+      } else {
+        String data = await connsFile.readAsString();
+        m = DsJson.decode(data);
+      }
+
       m.forEach((String name, Map m) {
         String path = "/users/$name";
         UserRootNode node = getOrCreateNode(path, false);
@@ -344,7 +366,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         node.load(m);
         usersNode.children[name] = node;
       });
-    } catch (err) {}
+    } catch (e, stack) {
+      logger.fine("Failed to load user nodes.", e, stack);
+    }
   }
 
   Future<Map> saveUsrNodes() async {
@@ -352,10 +376,16 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     usersNode.children.forEach((String name, LocalNodeImpl node) {
       m[name] = node.serialize(true);
     });
-    File connsFile = new File("usernodes.json");
-    if (shouldSaveFiles) {
-      await connsFile.writeAsString(DsJson.encode(m));
+
+    if (saveHandler != null) {
+      await saveHandler("usernodes", m);
+    } else {
+      File connsFile = new File("usernodes.json");
+      if (shouldSaveFiles) {
+        await connsFile.writeAsString(DsJson.encode(m));
+      }
     }
+
     return m;
   }
 
@@ -363,8 +393,19 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     // loadConns from file
     File connsFile = new File("conns.json");
     try {
-      String data = await connsFile.readAsString();
-      Map m = DsJson.decode(data);
+      Map m;
+
+      if (loadHandler != null) {
+        m = await loadHandler("conns");
+      } else {
+        String data = await connsFile.readAsString();
+        m = DsJson.decode(data);
+      }
+
+      if (m == null) {
+        return;
+      }
+
       List names = [];
       m.forEach((String name, Map m) {
         String path = "$downstreamNameSS$name";
@@ -382,11 +423,14 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         names.add(name);
       });
       kickDslinkAction.updateNames(names);
-    } catch (err) {}
+    } catch (e, stack) {
+      logger.fine("Failed to load conns.", e, stack);
+    }
   }
 
   loadOverrideAttributes() async {
-    IValueStorageBucket storageBucket = storage.getOrCreateValueStorageBucket("attribute");
+    IValueStorageBucket storageBucket = storage
+        .getOrCreateValueStorageBucket("attribute");
     overrideAttributeStorageBucket = storageBucket;
 
     logger.finest("Loading Proxy Attributes");
@@ -413,16 +457,32 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     root.children["data"] = dataNode;
     nodes["/data"] = dataNode;
 
-    File connsFile = new File("data.json");
+    Map m;
+    if (loadHandler != null) {
+      m = await loadHandler("data");
+    } else {
+      File connsFile = new File("data.json");
+      try {
+        String data = await connsFile.readAsString();
+        m = DsJson.decode(data);
+      } catch (e, stack) {
+        logger.fine("Failed to load data nodes.", e, stack);
+      }
+    }
+
     try {
-      String data = await connsFile.readAsString();
-      Map m = DsJson.decode(data);
+      if (m == null) {
+        return;
+      }
+
       m.forEach((String name, Map m) {
         String path = "/data/$name";
         BrokerDataNode node = getOrCreateNode(path, true);
         node.load(m);
       });
-    } catch (err) {}
+    } catch (e, stack) {
+      logger.fine("Failed to load data nodes.", e, stack);
+    }
 
     if (storage != null) {
        Map values = await dataNode.storageBucket.load();
@@ -441,24 +501,38 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     dataNode.children.forEach((String name, BrokerDataNode node) {
       m[name] = node.serialize(true);
     });
-    File dataFile = new File("data.json");
-    if (shouldSaveFiles) {
-      await safeWriteAsString(dataFile, DsJson.encode(m), verifyJson: true);
+
+    if (saveHandler != null) {
+      await saveHandler("data", m);
+    } else {
+      File dataFile = new File("data.json");
+      if (shouldSaveFiles) {
+        await safeWriteAsString(dataFile, DsJson.encode(m), verifyJson: true);
+      }
     }
+
     return m;
   }
 
   loadTokensNodes() async {
     File connsFile = new File("tokens.json");
     try {
-      String data = await connsFile.readAsString();
-      Map m = DsJson.decode(data);
+      Map m;
+
+      if (loadHandler != null) {
+        m = await loadHandler("tokens");
+      } else {
+        String data = await connsFile.readAsString();
+        m = DsJson.decode(data);
+      }
+
       m.forEach((String name, Map m) {
         String path = "/sys/tokens/$name";
         TokenGroupNode tokens = new TokenGroupNode(path, this, name);
         tokens.load(m);
       });
-    } catch (err) {
+    } catch (e, stack) {
+      logger.fine("Failed to load token nodes.", e, stack);
       String path = "/sys/tokens/root";
       TokenGroupNode tokens = new TokenGroupNode(path, this, "root");
       tokens.init();
@@ -470,10 +544,16 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     tokens.children.forEach((String name, TokenGroupNode node) {
       m[name] = node.serialize(true);
     });
-    File connsFile = new File("tokens.json");
-    if (shouldSaveFiles) {
-      await connsFile.writeAsString(DsJson.encode(m));
+
+    if (saveHandler != null) {
+      await saveHandler("tokens", m);
+    } else {
+      File connsFile = new File("tokens.json");
+      if (shouldSaveFiles) {
+        await connsFile.writeAsString(DsJson.encode(m));
+      }
     }
+
     return m;
   }
 
@@ -485,14 +565,21 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       RemoteLinkManager manager = node._linkManager;
       m[name] = manager.rootNode.serialize(false);
     });
-    File connsFile = new File("conns.json");
-    if (shouldSaveFiles) {
-      await safeWriteAsString(connsFile, DsJson.encode(m), verifyJson: true);
+
+    if (saveHandler != null) {
+      await saveHandler("conns", m);
+    } else {
+      File connsFile = new File("conns.json");
+      if (shouldSaveFiles) {
+        await safeWriteAsString(connsFile, DsJson.encode(m), verifyJson: true);
+      }
     }
+
     kickDslinkAction.updateNames(names);
     updateGroupAction.updateNames(names);
     return m;
   }
+
   void updateQuarantineIds() {
     List qIds = [];
     quarantineNode.children.forEach((String key, BrokerNode node) {
@@ -1162,7 +1249,9 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     conns.forEach((key, RemoteLinkManager m){
       for (String key in m.nodes.keys.toList()) {
         RemoteLinkNode node = m.nodes[key];
-        if (node._listReqListener == null && node.callbacks.isEmpty && !(node is RemoteLinkRootNode)) {
+        if (node._listReqListener == null &&
+            node.callbacks.isEmpty &&
+            !(node is RemoteLinkRootNode)) {
           nodes.remove(node.path);
           m.nodes.remove(key);
         }
