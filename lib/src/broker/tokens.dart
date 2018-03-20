@@ -239,7 +239,7 @@ class TokenNode extends BrokerNode {
           if (node is RemoteLinkRootNode) {
             Object token = node.configs[r'$$token'];
             if (token == id) {
-              provider.remoteLinkByPath(node.path);
+              provider.removeLinkByPath(node.path);
             }
           }
         }
