@@ -472,7 +472,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     });
     File connsFile = new File("tokens.json");
     if (shouldSaveFiles) {
-      await connsFile.writeAsString(DsJson.encode(m));
+      await safeWriteAsString(connsFile, DsJson.encode(m));
     }
     return m;
   }
@@ -487,7 +487,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     });
     File connsFile = new File("conns.json");
     if (shouldSaveFiles) {
-      await safeWriteAsString(connsFile, DsJson.encode(m), verifyJson: true);
+      var encode = DsJson.encode(m);
+      await safeWriteAsString(connsFile, encode, verifyJson: true);
     }
     kickDslinkAction.updateNames(names);
     updateGroupAction.updateNames(names);
@@ -1025,12 +1026,14 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     }
   }
 
-  void remoteLinkByPath(String path) {
+  void removeLinkByPath(String path) {
     Node node = nodes[path];
     if (node is RemoteLinkRootNode) {
 
       RemoteLinkManager manager = node._linkManager;
 
+      nodes.remove(path);
+      conns.remove(path);
       String dsId = _connPath2id[path];
       if (dsId != null) {
         BaseLink link = _links[dsId];
