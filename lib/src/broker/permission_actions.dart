@@ -126,10 +126,10 @@ class UpdatePermissionAction extends BrokerStaticNode {
         } else {
           LocalNode node = provider.getOrCreateNode(path);
           if (node is BrokerNode) {
-            node.loadPermission(permissions);
             if (!node.persist()) {
-              node.loadPermission(null);
               response.close(DSError.PERMISSION_DENIED);
+            } else {
+              node.loadPermission(permissions);
             }
           } else if (node is RemoteLinkNode) {
             BrokerNodePermission permissionChild = node
