@@ -17,43 +17,37 @@ abstract class BrokerNodePermission {
 
   void getPermission(
       Iterator<String> paths, List<String> groups, List<int> output) {
-    // find permission for group
     if (permissionList != null) {
       int len = groups.length;
       for (int i = 0; i < len; ++i) {
+        PermissionPair defaultPair;
+        bool assigned = false;
         String group = groups[i];
         for (PermissionPair p in permissionList) {
-          if (p.isDefault || p.group == group) {
+          if (p.isDefault) defaultPair = p;
+          if (p.group == group) {
             int permission = p.permission;
             output[i] = permission;
             if (permission == Permission.CONFIG) {
               // children won't overwrite a config permission
               return;
             }
+            assigned = true;
             break;
           }
         }
+
+        if (!assigned && defaultPair != null) {
+          output[i] = defaultPair.permission;
+        }
       }
     }
+
     if (paths.moveNext()) {
       BrokerNodePermission child = getPermissionChild(paths.current);
       if (child != null) {
         child.getPermission(paths, groups, output);
       }
-    }
-  }
-
-  // This is so that "default" is always evaluated last when
-  // checking the permissions
-  int _sortPermissionsByDefault(PermissionPair p1, PermissionPair p2) {
-    if (p1.isDefault && p2.isDefault) {
-      return 0;
-    } else if (p1.isDefault) {
-      return 1;
-    } else if (p2.isDefault) {
-      return -1;
-    } else {
-      return 0;
     }
   }
 
@@ -78,7 +72,6 @@ abstract class BrokerNodePermission {
             continue;
           }
           permissionList.add(new PermissionPair(key, pint));
-          permissionList.sort(_sortPermissionsByDefault);
         }
       }
       if (permissionList.isEmpty) {
