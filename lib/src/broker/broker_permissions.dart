@@ -15,26 +15,34 @@ abstract class BrokerNodePermission {
 
   BrokerNodePermission getPermissionChild(String str);
 
-  void getPermission(Iterator<String> paths, List<String> groups,
-    List<int> output) {
-    // find permission for group
+  void getPermission(
+      Iterator<String> paths, List<String> groups, List<int> output) {
     if (permissionList != null) {
       int len = groups.length;
       for (int i = 0; i < len; ++i) {
+        PermissionPair defaultPair;
+        bool assigned = false;
         String group = groups[i];
         for (PermissionPair p in permissionList) {
-          if (p.isDefault || p.group == group) {
+          if (p.isDefault) defaultPair = p;
+          if (p.group == group) {
             int permission = p.permission;
             output[i] = permission;
             if (permission == Permission.CONFIG) {
               // children won't overwrite a config permission
               return;
             }
+            assigned = true;
             break;
           }
         }
+
+        if (!assigned && defaultPair != null) {
+          output[i] = defaultPair.permission;
+        }
       }
     }
+
     if (paths.moveNext()) {
       BrokerNodePermission child = getPermissionChild(paths.current);
       if (child != null) {
@@ -52,8 +60,10 @@ abstract class BrokerNodePermission {
       }
 
       for (var pair in l) {
-        if (pair is List && pair.length == 2 && pair[0] is String &&
-          pair[1] is String) {
+        if (pair is List &&
+            pair.length == 2 &&
+            pair[0] is String &&
+            pair[1] is String) {
           String key = pair[0];
           String p = pair[1];
           int pint = Permission.parse(p);
@@ -86,10 +96,9 @@ abstract class BrokerNodePermission {
   }
 }
 
-
 class VirtualNodePermission extends BrokerNodePermission {
   Map<String, VirtualNodePermission> children =
-    new Map<String, VirtualNodePermission>();
+      new Map<String, VirtualNodePermission>();
 
   BrokerNodePermission getPermissionChild(String str) {
     return children[str];
@@ -98,8 +107,7 @@ class VirtualNodePermission extends BrokerNodePermission {
   void load(Map m) {
     m.forEach((String name, Object value) {
       if (value is Map) {
-        children[name] = new VirtualNodePermission()
-          ..load(value);
+        children[name] = new VirtualNodePermission()..load(value);
       }
     });
     if (m['?permissions'] is List) {
@@ -118,7 +126,6 @@ class VirtualNodePermission extends BrokerNodePermission {
     }
     return rslt;
   }
-
 }
 
 class BrokerPermissions implements IPermissionManager {
@@ -128,11 +135,9 @@ class BrokerPermissions implements IPermissionManager {
 
   int getPermission(String path, Responder resp) {
     if (root != null && root.permissionList != null) {
-      List<int> output = new List<int>.filled(
-        resp.groups.length, Permission.NONE);
-      var iterator = path
-        .split('/')
-        .iterator;
+      List<int> output =
+          new List<int>.filled(resp.groups.length, Permission.NONE);
+      var iterator = path.split('/').iterator;
       // remove first ""
       iterator.moveNext();
       root.getPermission(iterator, resp.groups, output);
