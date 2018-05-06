@@ -3,8 +3,7 @@ version: 1.0.0
 description: DSA Broker
 dependencies:
   dslink:
-#    git: https://github.com/IOT-DSA/sdk-dslink-dart.git
-    path: ../sdk-dslink-dart
+    git: https://github.com/IOT-DSA/sdk-dslink-dart.git
 environment:
   sdk: ^1.11.0
 executables:
