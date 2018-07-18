@@ -1,7 +1,8 @@
 part of dsbroker.broker;
 
 const List<String> _LINK_ROOT_ALLOWED = const [
-  r"$uid"
+  r"$uid",
+  r"$brokerUUID"
 ];
 
 // TODO, implement special configs and attribute merging
