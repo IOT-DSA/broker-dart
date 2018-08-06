@@ -65,7 +65,8 @@ class BrokerResponder extends Responder {
               actionNode,
               path.name
             ),
-            path
+            path,
+            m['params']
           ),
           parentNode,
           permission
