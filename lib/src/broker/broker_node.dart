@@ -136,6 +136,7 @@ class RootNode extends BrokerNode {
 
     if (provider != null) {
       configs[r"$uid"] = provider.uid;
+      configs[r"$brokerUUID"] = provider.brokerUUID;
     }
   }
 

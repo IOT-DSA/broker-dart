@@ -61,7 +61,12 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   }
 
 
+  // a id generated each time
   String uid;
+
+  // a persisted id
+  String brokerUUID;
+
 
   BrokerStatsController stats;
 
@@ -109,6 +114,15 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       .getOrCreateValueStorageBucket("brokerAttributes");
 
     uid = generateToken();
+
+    File uuidF = new File('.uuid');
+    if (uuidF.existsSync()) {
+      brokerUUID = uuidF.readAsStringSync();
+    } else {
+      brokerUUID = new Uuid().v4();
+      uuidF.writeAsString(brokerUUID);
+    }
+
 
     this.storage = storage;
 
