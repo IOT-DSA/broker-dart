@@ -31,6 +31,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   BrokerNode upstreamDataNode;
   BrokerNode quarantineNode;
   BrokerNode tokens;
+  bool strictTls = false;
   Map<String, String> iconOwnerMappings = <String, String>{};
 
   BrokerConfigSetHandler setConfigHandler;
@@ -104,7 +105,8 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     this.defaultPermission,
     this.downstreamName: "conns",
     IStorageManager storage,
-    this.enabledDataNodes: true
+    this.enabledDataNodes: true,
+    this.strictTls: false
   }) {
     if (storage == null) {
       storage = new SimpleStorageManager("storage");

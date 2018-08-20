@@ -483,9 +483,8 @@ class UpstreamBrokerNode extends BrokerNode {
       isResponder: true,
       overrideRequester: overrideRequester,
       overrideResponder: overrideResponder,
-      token: (
-        token != null && token.isNotEmpty
-      ) ? token : null
+      token: (token != null && token.isNotEmpty) ? token : null,
+      strictTls: p.strictTls
     );
 
     link.logName = "Upstream at /upstream/${name}";
