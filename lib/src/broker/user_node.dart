@@ -88,6 +88,7 @@ InvokeResponse addUserChildNode(Map params, Responder responder,
       (responder.nodeProvider as BrokerNodeProvider).saveUsrNodes,
       1000
     );
+    return response..close();
   }
   return response..close(DSError.INVALID_PARAMETER);
 }
@@ -135,6 +136,7 @@ InvokeResponse addUserLink(
       (responder.nodeProvider as BrokerNodeProvider).saveUsrNodes,
       1000
     );
+    return response..close();
   }
   return response..close(DSError.INVALID_PARAMETER);
 }
@@ -189,12 +191,12 @@ final Map<String, dynamic> _userNodeFunctions = <String, dynamic>{
   "broker": {
     "userNode": {
       "addChild": addUserChildNode,
-      "addLink": addUserLink,
+//      "addLink": addUserLink,
       "removeNode": removeUserNode
     },
     "userRoot": {
-      "addChild": addUserChildNode,
-      "addLink": addUserLink
+      "addChild": addUserChildNode
+//      "addLink": addUserLink
     }
   }
 };
