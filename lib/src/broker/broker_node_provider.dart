@@ -368,9 +368,10 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
     usersNode.children.forEach((String name, LocalNodeImpl node) {
       m[name] = node.serialize(true);
     });
-    File connsFile = new File("usernodes.json");
+
     if (shouldSaveFiles) {
-      await connsFile.writeAsString(DsJson.encode(m));
+      File connsFile = new File("usernodes.json");
+      await safeWriteAsString(connsFile, DsJson.encode(m));
     }
     return m;
   }
