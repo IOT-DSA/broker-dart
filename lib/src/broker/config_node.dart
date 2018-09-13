@@ -43,7 +43,7 @@ class UpdateDefaultPermission extends BrokerStaticNode {
         }
       }
       if (!configFound) {
-        defaultPermission = [[':config','config']]..addAll(defaultPermission);
+        defaultPermission.insert(0, [':config', 'config']);
         updateData(defaultPermission);
         return;
       }
