@@ -27,7 +27,7 @@ class GetPermissionAction extends BrokerStaticNode {
       int permission = provider.permissions.getPermission(path, responder);
       String output;
       if (permission == Permission.CONFIG) {
-        LocalNode node = provider.getNode(path);
+        LocalNode node = provider.getOrCreateNode(path, false);
         if (node is BrokerNode) {
           List permission = node.serializePermission();
           if (permission != null) {
