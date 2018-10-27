@@ -1,11 +1,11 @@
 name: dsbroker
-version: 1.0.0
+version: 1.1.0
 description: DSA Broker
 dependencies:
   uuid: 1.0.1
   dslink:
     git: https://github.com/IOT-DSA/sdk-dslink-dart.git
 environment:
-  sdk: ^1.11.0
+  sdk: ">=1.13.0"
 executables:
   dsbroker: broker
