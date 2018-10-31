@@ -1,13 +1,15 @@
 name: dsbroker
 version: 1.1.0
-description: DSA Broker
+description: DSA Broker which manages connections of DSLinks
+authors:
+- Rick Zhou <rinick@gmail.com>
+- Kenneth Endfinger <k.endfinger@dglogik.com>
+- Matthew Butler <butler.matthew@gmail.com>
+homepage: https://get.iot-dsa.org
 dependencies:
   uuid: 1.0.1
-  dslink:
-    git: 
-      url: https://github.com/IOT-DSA/sdk-dslink-dart.git
-      ref: v1.0.0
+  dslink: ^1.0.0
 environment:
-  sdk: ">=1.13.0"
+  sdk: ">=1.13.0 <2.0.0"
 executables:
   dsbroker: broker
