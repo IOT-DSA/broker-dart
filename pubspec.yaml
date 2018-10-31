@@ -4,7 +4,9 @@ description: DSA Broker
 dependencies:
   uuid: 1.0.1
   dslink:
-    git: https://github.com/IOT-DSA/sdk-dslink-dart.git
+    git: 
+      url: https://github.com/IOT-DSA/sdk-dslink-dart.git
+      ref: v1.0.0
 environment:
   sdk: ">=1.13.0"
 executables:
