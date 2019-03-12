@@ -166,6 +166,7 @@ class HttpServerLink implements ServerLink {
 
   bool verifySalt(int type, String hash) {
     if (hash == null) {
+      logger.warning("$dsId was rejected due to an invalid auth value: null");
       return false;
     }
     if (verifiedNonce != null && verifiedNonce.verifySalt(salts[type], hash)) {
@@ -175,6 +176,13 @@ class HttpServerLink implements ServerLink {
       _updateSalt(type);
       nonceChanged();
       return true;
+    }
+    if (tempNonce != null) {
+      logger.warning("$dsId was rejected due to an invalid auth value: ${hash}, expects ${tempNonce.hashSalt(salts[type])}");
+    } else if (verifiedNonce != null) {
+      logger.warning("$dsId was unable to reconnect due to an invalid auth value: ${hash}, expects ${verifiedNonce.hashSalt(salts[type])}");
+    } else {
+      logger.warning("$dsId was rejected, handshake not initialized");
     }
     return false;
   }
@@ -197,7 +205,6 @@ class HttpServerLink implements ServerLink {
     }
 
     if (!trusted && !verifySalt(0, request.uri.queryParameters['auth'])) {
-      logger.warning("$dsId was rejected due to an improper auth value");
       throw HttpStatus.UNAUTHORIZED;
     }
 
