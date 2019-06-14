@@ -199,6 +199,8 @@ class HttpServerLink implements ServerLink {
   WebSocketConnection wsconnection;
 
   void handleWsUpdate(HttpRequest request, bool trusted, [WebSocketUpgradeFunction upgrade]) {
+    logger.info('Headers: ${request.headers}');
+
     if (upgrade == null) {
       upgrade = (request, useCompression, [selector]) =>
         HttpHelper.upgradeToWebSocket(request, selector, useCompression);
@@ -234,7 +236,9 @@ class HttpServerLink implements ServerLink {
           onRequesterReadyCompleter.complete(requester);
         }
       }
-    }).catchError((e) {
+    }).catchError((e, s) {
+      logger.warning('Error upgrading websocket', e);
+      logger.finest('Error upgrading websocket', e, s);
       try {
         if (e is WebSocketException) {
           request.response.statusCode = HttpStatus.BAD_REQUEST;
