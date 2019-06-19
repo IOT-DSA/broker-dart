@@ -199,8 +199,6 @@ class HttpServerLink implements ServerLink {
   WebSocketConnection wsconnection;
 
   void handleWsUpdate(HttpRequest request, bool trusted, [WebSocketUpgradeFunction upgrade]) {
-    logger.info('Headers: ${request.headers}');
-
     if (upgrade == null) {
       upgrade = (request, useCompression, [selector]) =>
         HttpHelper.upgradeToWebSocket(request, selector, useCompression);
