@@ -234,7 +234,9 @@ class HttpServerLink implements ServerLink {
           onRequesterReadyCompleter.complete(requester);
         }
       }
-    }).catchError((e) {
+    }).catchError((e, s) {
+      logger.warning('Error upgrading websocket', e);
+      logger.finest('Error upgrading websocket', e, s);
       try {
         if (e is WebSocketException) {
           request.response.statusCode = HttpStatus.BAD_REQUEST;
