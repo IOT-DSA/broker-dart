@@ -435,7 +435,7 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
   Response setValue(Object value, Responder responder, Response response, [int maxPermission = Permission.CONFIG]) {
     // TODO check permission on RemoteLinkRootNode
     _linkManager.requester.set(remotePath, value, maxPermission).then((update) {
-      response.close();
+      response.close(update.error);
     }).catchError((err) {
       if (err is DSError) {
         response.close(err);
