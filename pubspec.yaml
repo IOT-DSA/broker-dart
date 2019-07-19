@@ -1,5 +1,5 @@
 name: dsbroker
-version: 1.1.1+1
+version: 1.1.2
 description: DSA Broker which manages connections of DSLinks
 authors:
 - Rick Zhou <rinick@gmail.com>
@@ -8,7 +8,7 @@ authors:
 homepage: https://get.iot-dsa.org
 dependencies:
   uuid: 1.0.1
-  dslink: ^1.0.0
+  dslink: ^1.0.3
 environment:
   sdk: ">=1.13.0 <2.0.0"
 executables:
