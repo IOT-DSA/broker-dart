@@ -617,8 +617,10 @@ class RemoteLinkListController extends ListController {
         }
 
         if (name.startsWith(r'$')) {
-          if (!reseted && (name == r'$is' || name == r'$base' || (name == r'$disconnectedTs' && value is String))) {
+          if (!reseted && (name == r'$is' || name == r'$base')) {
             reseted = true;
+            node.resetNodeCache();
+          } else if (name == r'$disconnectedTs' && value is String) {
             node.resetNodeCache();
           }
 
