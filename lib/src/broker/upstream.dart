@@ -501,7 +501,6 @@ class UpstreamBrokerNode extends BrokerNode {
     link.onRequesterReady.then((Requester requester) {
       if (link.remotePath != null) {
         linkManager.rootNode.configs[r"$remotePath"] = link.remotePath;
-        linkManager.rootNode.updateList(r"$remotePath");
       }
     });
   }

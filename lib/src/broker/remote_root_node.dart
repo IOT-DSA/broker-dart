@@ -10,10 +10,6 @@ class RemoteLinkRootNode extends RemoteLinkNode with BrokerNodePermission implem
   RemoteLinkRootNode(
       String path, String remotePath, RemoteLinkManager linkManager)
       : super(path, linkManager.broker, remotePath, linkManager){
-    if (path.startsWith('/upstream/')) {
-      // preset the dsa/broker value when it's upstream
-      configs[r'$is'] = 'dsa/broker';
-    }
   }
 
   bool get loaded => true;
