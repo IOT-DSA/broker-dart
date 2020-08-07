@@ -1,5 +1,5 @@
 name: dsbroker
-version: 1.1.3
+version: 1.1.4
 description: DSA Broker which manages connections of DSLinks
 authors:
 - Rick Zhou <rinick@gmail.com>
