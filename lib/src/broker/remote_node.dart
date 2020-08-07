@@ -202,13 +202,9 @@ class RemoteLinkNode extends RemoteNode implements LocalNode {
   RespSubscribeListener subscribe(callback(ValueUpdate), [int qos = 0]) {
     callbacks[callback] = qos;
     var rslt = new RespSubscribeListener(this, callback);
-    if (valueReady) {
-      callback(_lastValueUpdate);
-    }
-    if ( qos > lastQos) {
-      lastQos = qos;
-      _linkManager.requester.subscribe(remotePath, updateValue, qos);
-    }
+
+    if (valueReady) callback(_lastValueUpdate);
+    if (qos != lastQos) updateSubscriptionQos();
 
     return rslt;
   }
