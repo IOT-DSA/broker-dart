@@ -360,6 +360,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         node.load(m);
         usersNode.children[name] = node;
       });
+      usersNode.updateList(r'$is');
     } catch (err) {}
   }
 
@@ -472,9 +473,11 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       Map m = DsJson.decode(data);
       m.forEach((String name, Map m) {
         String path = "/sys/tokens/$name";
-        TokenGroupNode tokens = new TokenGroupNode(path, this, name);
-        tokens.load(m);
+        TokenGroupNode token = new TokenGroupNode(path, this, name);
+        token.load(m);
+        tokens.children[name] = token;
       });
+      tokens.updateList(r'$is');
     } catch (err) {
       String path = "/sys/tokens/root";
       TokenGroupNode tokens = new TokenGroupNode(path, this, "root");
