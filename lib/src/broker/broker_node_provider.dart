@@ -360,6 +360,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         node.load(m);
         usersNode.children[name] = node;
       });
+      usersNode.updateList(r'$is');
     } catch (err) {}
   }
 
@@ -472,9 +473,11 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
       Map m = DsJson.decode(data);
       m.forEach((String name, Map m) {
         String path = "/sys/tokens/$name";
-        TokenGroupNode tokens = new TokenGroupNode(path, this, name);
-        tokens.load(m);
+        TokenGroupNode token = new TokenGroupNode(path, this, name);
+        token.load(m);
+        tokens.children[name] = token;
       });
+      tokens.updateList(r'$is');
     } catch (err) {
       String path = "/sys/tokens/root";
       TokenGroupNode tokens = new TokenGroupNode(path, this, "root");
@@ -823,52 +826,52 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   }
 
   String getLinkPath(String fullId, String token) {
-    if (_id2connPath.containsKey(fullId)) {
-      return _id2connPath[fullId];
+    String connPath = _id2connPath[fullId];
+
+    if (token == null || token.isEmpty) {
+      return connPath ?? makeConnPath(fullId);
     }
 
-    if (token != null && token != "") {
-      TokenNode tokenNode = tokenContext.findTokenNode(token, fullId);
-      if (tokenNode != null) {
-        BrokerNode target = tokenNode.getTargetNode();
+    TokenNode tokenNode = tokenContext.findTokenNode(token, fullId);
+    if (tokenNode == null) {
+      return connPath ?? makeConnPath(fullId);
+    }
 
-        String connPath;
+    if (connPath == null) {
+      BrokerNode target = tokenNode.getTargetNode();
+      String folderPath = "${target.path}/";
+      String dsId = fullId;
+      int i = 43;
 
-        String folderPath = "${target.path}/";
-
-        String dsId = fullId;
-
-
-        // find a connName for it, keep append characters until find a new name
-        int i = 43;
-        if (dsId.length == 43) i = 42;
-        for (; i >= 0; --i) {
-          connPath = "$folderPath${dsId.substring(0, dsId.length - i)}";
-          if (i == 43 && connPath.length > 8 && connPath.endsWith("-")) {
-            // remove the last - in the name;
-            connPath = connPath.substring(0, connPath.length - 1);
-          }
-          if (!_connPath2id.containsKey(connPath)) {
-            _connPath2id[connPath] = fullId;
-            _id2connPath[fullId] = connPath;
-            break;
-          }
+      if (dsId.length == 43) i = 42;
+      for (; i >= 0; --i) {
+        connPath = "$folderPath${dsId.substring(0, dsId.length - i)}";
+        if (i == 43 && connPath.length > 8 && connPath.endsWith("-")) {
+          // remove the last - in the name;
+          connPath = connPath.substring(0, connPath.length - 1);
         }
-        if (tokenNode.useToken(connPath)) {
-          Node node = getOrCreateNode(connPath, false);
-          node.configs[r"$$token"] = tokenNode.id;
+        if (!_connPath2id.containsKey(connPath)) {
+          _connPath2id[connPath] = fullId;
+          _id2connPath[fullId] = connPath;
+          break;
         }
-        if (tokenNode.group is String) {
-          Node node = getOrCreateNode(connPath, false);
-          node.configs[r"$$group"] = tokenNode.group;
-        }
-        DsTimer.timerOnceBefore(saveConns, 300);
-        return connPath;
       }
     }
 
-    // fall back to normal path searching when it fails
-    return makeConnPath(fullId);
+    // TODO (mbutler): This doesn't belong here. Causes getLinkPath to have
+    // unexpected side-effects.
+    if (tokenNode.useToken(connPath)) {
+      Node node = getOrCreateNode(connPath, false);
+      node.configs[r"$$token"] = tokenNode.id;
+    }
+
+    if (tokenNode.group is String) {
+      Node node = getOrCreateNode(connPath, false);
+      node.configs[r"$$group"] = tokenNode.group;
+    }
+
+    DsTimer.timerOnceBefore(saveConns, 300);
+    return connPath;
   }
 
   void prepareUpstreamLink(String name) {
@@ -948,9 +951,10 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
   }
 
   ServerLink getLinkAndConnectNode(String dsId, {String sessionId: ""}) {
-    if (sessionId == null) sessionId = "";
+    sessionId ??= "";
     String str = dsId;
-    if (sessionId != null && sessionId != "") {
+
+    if (sessionId.isNotEmpty) {
       // user link
       str = "$dsId ${sessionId}";
     } else if (_links[str] != null) {
@@ -961,6 +965,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         // when link is not allowed, makeConnPath() returns null
         return null;
       }
+
       RemoteLinkNode node = getOrCreateNode(connPath, false);
       RemoteLinkManager conn = node._linkManager;
       if (!conn.inTree) {
@@ -1056,7 +1061,7 @@ class BrokerNodeProvider extends NodeProviderImpl implements ServerLinkManager {
         BaseLink link = _links[dsId];
         _connPath2id.remove(path);
         _id2connPath.remove(dsId);
-        link.close();
+        link?.close();
         _links.remove(dsId);
         DsTimer.timerOnceBefore(saveConns, 300);
       }

@@ -50,18 +50,17 @@ class TokenContext {
     if (token.length < 16) {
       return null;
     }
+
     String tokenId = token.substring(0, 16);
     String tokenHash = token.substring(16);
-    if (!tokens.containsKey(tokenId)) {
-      return null;
-    }
     TokenNode tokenNode = tokens[tokenId];
-    if (tokenNode.token == null || tokenNode.count == 0) {
+    if (tokenNode == null || tokenNode.token == null || tokenNode.count == 0) {
       return null;
     }
-    if (tokenNode.ts0 >= 0 && tokenNode.ts1 >= 0) {
-      int ts = new DateTime.now().millisecondsSinceEpoch;
-      if (ts < tokenNode.ts0 || ts >= tokenNode.ts1) {
+
+    if (tokenNode.ts0 != null && tokenNode.ts1 != null) {
+      var now = new DateTime.now();
+      if (now.isBefore(tokenNode.ts0) || now.isAfter(tokenNode.ts1)) {
         return null;
       }
     }
@@ -113,8 +112,8 @@ class TokenGroupNode extends BrokerStaticNode {
 }
 
 class TokenNode extends BrokerNode {
-  int ts0 = -1;
-  int ts1 = -1;
+  DateTime ts0;
+  DateTime ts1;
   int count = -1;
 
   /// destroy token with a timer;
@@ -148,29 +147,13 @@ class TokenNode extends BrokerNode {
   /// initialize timeRange and count
   void init() {
     if (configs[r'$$timeRange'] is String) {
-      String s = configs[r'$$timeRange'];
-      List dates = s.split('/');
-      if (dates.length == 2) {
-        try {
-          ts0 = DateTime.parse(dates[0]).millisecondsSinceEpoch;
-          ts1 = DateTime.parse(dates[1]).millisecondsSinceEpoch;
-        } catch (err) {
-          ts0 = -1;
-          ts1 = -1;
-        }
-        if (ts1 > -1) {
-          int now = new DateTime.now().millisecondsSinceEpoch;
-          if (now < ts1) {
-            timer = new Timer(new Duration(milliseconds: ts1 - now), delete);
-          } else {
-            DsTimer.callLater(delete);
-          }
-        }
-      }
+      _loadTimes();
     }
+
     if (configs[r'$$count'] is num) {
       count = (configs[r'$$count'] as num).toInt();
     }
+
     if (configs[r'$$managed'] == true) {
       managed = true;
       if (configs[r'$$links'] is List) {
@@ -188,6 +171,32 @@ class TokenNode extends BrokerNode {
 
     // TODO: implement target position
     // TODO: when target position is gone, token should be removed
+  }
+
+  void _loadTimes() {
+    String s = configs[r'$$timeRange'];
+    List dates = s.split('/');
+
+    if (dates.length != 2) {
+      logger.info('Failed to prase Token TimeRange: $s');
+      return;
+    }
+
+    try {
+      ts0 = DateTime.parse(dates[0]);
+      ts1 = DateTime.parse(dates[1]);
+    } catch (err) {
+      logger.info('Failed to parse Token TimeRange: $s', err);
+      return;
+    }
+
+    // Set timer to delete token if it is not yet expired.
+    DateTime now = new DateTime.now();
+    if (now.isBefore(ts1)) {
+      timer = new Timer(ts1.difference(now), delete);
+    } else {
+      DsTimer.callLater(delete);
+    }
   }
 
   /// get the node where children should be connected

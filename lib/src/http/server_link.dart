@@ -15,7 +15,7 @@ class HttpServerLink implements ServerLink {
 
   final String dsId;
   final String session;
-  final String token;
+  String token;
   final PublicKey publicKey;
 
   String path;
