@@ -109,6 +109,14 @@ class TokenGroupNode extends BrokerStaticNode {
     });
     _loaded = true;
   }
+
+  void delete() {
+    for (var nd in children.values.toList()) {
+      if (nd is TokenNode) {
+        nd.delete();
+      }
+    }
+  }
 }
 
 class TokenNode extends BrokerNode {
