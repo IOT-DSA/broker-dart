@@ -1,5 +1,6 @@
 # Changelog
 
+* v1.1.6 - Fix issue deleting users after previous update.
 * v1.1.5 - Resolve issues with tokens:
     * Properly add and remove tokens when adding a user.
     * Update downstream connection attributes when token is changed on a link/upstream connection.
